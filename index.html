@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Product Viewer</title>
+<style>
+  :root {
+    --primary: #2196F3;
+    --primary-dark: #1976D2;
+    --secondary: #78909C;
+    --bg: #f5f7fa;
+    --card-bg: #ffffff;
+    --text: #263238;
+    --text-light: #607D8B;
+    --border: #e0e0e0;
+    --accent: #FF9800;
+    --success: #4CAF50;
+    --radius: 12px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    --shadow-hover: 0 4px 20px rgba(0,0,0,0.12);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* ===== HEADER ===== */
+  .header {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    padding: 16px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  .header h1 {
+    font-size: 20px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .header-sub {
+    font-size: 12px;
+    opacity: 0.85;
+    margin-top: 2px;
+  }
+
+  /* ===== TABS ===== */
+  .tab-bar {
+    display: flex;
+    background: var(--card-bg);
+    border-bottom: 2px solid var(--border);
+    position: sticky;
+    top: 60px;
+    z-index: 99;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 12px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-light);
+    background: none;
+    border: none;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+  }
+  .tab-btn.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+    background: rgba(33,150,243,0.05);
+  }
+
+  /* ===== SEARCH BAR ===== */
+  .search-bar {
+    padding: 12px 16px;
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 108px;
+    z-index: 98;
+  }
+  .search-bar input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-bar input:focus {
+    border-color: var(--primary);
+  }
+
+  /* ===== TAB CONTENT ===== */
+  .tab-content { display: none; padding: 12px 16px 80px; }
+  .tab-content.active { display: block; }
+
+  /* ===== LOADING ===== */
+  .loading {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-light);
+  }
+  .loading-spinner {
+    width: 40px; height: 40px;
+    border: 4px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ===== PROJECT CARD ===== */
+  .project-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 12px;
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+  }
+  .project-card:hover {
+    box-shadow: var(--shadow-hover);
+  }
+  .project-header {
+    padding: 14px 16px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+  }
+  .project-header:active {
+    background: rgba(0,0,0,0.02);
+  }
+  .project-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .project-pid {
+    font-size: 11px;
+    color: var(--text-light);
+    margin-top: 2px;
+  }
+  .project-customer {
+    font-size: 12px;
+    color: var(--primary);
+    margin-top: 2px;
+  }
+  .chevron {
+    font-size: 18px;
+    color: var(--text-light);
+    transition: transform 0.3s;
+  }
+  .project-card.open .chevron {
+    transform: rotate(180deg);
+  }
+  .project-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease;
+  }
+  .project-card.open .project-body {
+    max-height: 5000px;
+  }
+  .project-body-inner {
+    padding: 0 16px 16px;
+  }
+
+  /* ===== PROJECT INFO ===== */
+  .project-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .info-item {
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 8px 10px;
+  }
+  .info-item.full {
+    grid-column: 1 / -1;
+  }
+  .info-label {
+    font-size: 10px;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+  }
+  .info-value {
+    font-size: 13px;
+    font-weight: 500;
+    word-break: break-all;
+  }
+
+  /* ===== ADDRESS SECTION ===== */
+  .address-section {
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 12px;
+  }
+  .address-section h4 {
+    font-size: 12px;
+    color: var(--text-light);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .address-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .address-block {
+    background: white;
+    border-radius: 6px;
+    padding: 8px;
+    position: relative;
+  }
+  .address-block-label {
+    font-size: 10px;
+    color: var(--text-light);
+    margin-bottom: 4px;
+  }
+  .address-block-value {
+    font-size: 12px;
+    line-height: 1.4;
+    min-height: 20px;
+    word-break: break-all;
+  }
+  .copy-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 10px;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+  }
+  .copy-btn:hover { opacity: 1; }
+  .copy-all-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 11px;
+    cursor: pointer;
+    margin-top: 8px;
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* ===== PRODUCT TABLE ===== */
+  .product-section h4 {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .product-table-wrapper {
+    overflow-x: auto;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .product-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    min-width: 500px;
+  }
+  .product-table th {
+    background: var(--primary);
+    color: white;
+    padding: 8px 10px;
+    text-align: left;
+    font-weight: 600;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+  }
+  .product-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .product-table tr:last-child td {
+    border-bottom: none;
+  }
+  .product-table tr:nth-child(even) {
+    background: rgba(0,0,0,0.02);
+  }
+  .material-list {
+    list-style: none;
+    padding: 0;
+  }
+  .material-list li {
+    padding: 2px 0;
+    font-size: 11px;
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .material-name {
+    color: var(--text);
+  }
+  .material-cost {
+    color: var(--accent);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  /* ===== CUSTOMER CARD ===== */
+  .customer-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .customer-header {
+    padding: 14px 16px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+  }
+  .customer-title {
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .customer-cid {
+    font-size: 11px;
+    color: var(--text-light);
+    margin-top: 2px;
+  }
+  .customer-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease;
+  }
+  .customer-card.open .customer-body {
+    max-height: 3000px;
+  }
+  .customer-card.open .chevron {
+    transform: rotate(180deg);
+  }
+  .customer-body-inner {
+    padding: 0 16px 16px;
+  }
+  .customer-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .customer-projects-label {
+    font-size: 12px;
+    color: var(--text-light);
+    margin-bottom: 6px;
+  }
+  .project-link-btn {
+    display: inline-block;
+    background: rgba(33,150,243,0.1);
+    color: var(--primary);
+    border: 1px solid rgba(33,150,243,0.3);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    margin: 2px 4px 2px 0;
+    transition: background 0.2s;
+  }
+  .project-link-btn:hover {
+    background: rgba(33,150,243,0.2);
+  }
+
+  /* ===== MATERIAL CARD ===== */
+  .material-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .material-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  .material-card-name {
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .material-card-mid {
+    font-size: 11px;
+    color: var(--text-light);
+  }
+  .material-card-cost {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .material-card-info {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--text-light);
+  }
+
+  /* ===== EMPTY STATE ===== */
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-light);
+  }
+  .empty-state .icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+  }
+
+  /* ===== TOAST ===== */
+  .toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #323232;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    z-index: 1000;
+    transition: transform 0.3s;
+    white-space: nowrap;
+  }
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* ===== PRICE DISPLAY ===== */
+  .price-tag {
+    display: inline-block;
+    background: rgba(255,152,0,0.1);
+    color: #E65100;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-weight: 600;
+    font-size: 12px;
+  }
+  .price-tag.sell {
+    background: rgba(76,175,80,0.1);
+    color: #2E7D32;
+  }
+
+  /* ===== SUMMARY BAR ===== */
+  .summary-bar {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+  }
+  .summary-chip {
+    background: var(--bg);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .summary-chip .label {
+    color: var(--text-light);
+  }
+  .summary-chip .value {
+    font-weight: 700;
+  }
+  .summary-chip .value.cost { color: #E65100; }
+  .summary-chip .value.sell { color: #2E7D32; }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 400px) {
+    .project-info, .customer-info {
+      grid-template-columns: 1fr;
+    }
+    .address-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <h1>📋 Product Viewer</h1>
+  <div class="header-sub">製品情報ビューア</div>
+</div>
+
+<!-- TABS -->
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('projects')">📁 案件</button>
+  <button class="tab-btn" onclick="switchTab('customers')">👥 顧客</button>
+  <button class="tab-btn" onclick="switchTab('materials')">🧱 素材</button>
+</div>
+
+<!-- SEARCH -->
+<div class="search-bar">
+  <input type="text" id="searchInput" placeholder="🔍 検索..." oninput="filterAll()">
+</div>
+
+<!-- LOADING -->
+<div id="loadingView" class="loading">
+  <div class="loading-spinner"></div>
+  <div>データを読み込んでいます...</div>
+</div>
+
+<!-- PROJECTS TAB -->
+<div id="tab-projects" class="tab-content active">
+  <div id="projectList"></div>
+</div>
+
+<!-- CUSTOMERS TAB -->
+<div id="tab-customers" class="tab-content">
+  <div id="customerList"></div>
+</div>
+
+<!-- MATERIALS TAB -->
+<div id="tab-materials" class="tab-content">
+  <div id="materialList"></div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="toast"></div>
+
+<script>
+const API = 'https://sheetdb.io/api/v1/16f9oq61xmnqu';
+
+let projects = [];
+let customers = [];
+let materials = [];
+let products = [];
+
+// ===== INIT =====
+async function init() {
+  try {
+    const [projRes, custRes, matRes, prodRes] = await Promise.all([
+      fetch(`${API}?sheet=ProjectCustomer`).then(r => r.json()),
+      fetch(`${API}?sheet=Customer`).then(r => r.json()),
+      fetch(`${API}?sheet=Material`).then(r => r.json()),
+      fetch(`${API}?sheet=Products`).then(r => r.json())
+    ]);
+
+    // Filter out hidden projects
+    projects = projRes.filter(p => p.Hidden !== 'true' && p.Hidden !== 'TRUE');
+    customers = custRes;
+    materials = matRes;
+    products = prodRes;
+
+    document.getElementById('loadingView').style.display = 'none';
+    renderProjects();
+    renderCustomers();
+    renderMaterials();
+  } catch (e) {
+    console.error(e);
+    document.getElementById('loadingView').innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><div>データの読み込みに失敗しました</div></div>';
+  }
+}
+
+// ===== TABS =====
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+  filterAll();
+}
+
+// ===== FILTER =====
+function filterAll() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  filterProjects(q);
+  filterCustomers(q);
+  filterMaterials(q);
+}
+
+function filterProjects(q) {
+  document.querySelectorAll('.project-card').forEach(card => {
+    const text = card.dataset.search || '';
+    card.style.display = text.includes(q) ? '' : 'none';
+  });
+}
+function filterCustomers(q) {
+  document.querySelectorAll('.customer-card').forEach(card => {
+    const text = card.dataset.search || '';
+    card.style.display = text.includes(q) ? '' : 'none';
+  });
+}
+function filterMaterials(q) {
+  document.querySelectorAll('.material-card').forEach(card => {
+    const text = card.dataset.search || '';
+    card.style.display = text.includes(q) ? '' : 'none';
+  });
+}
+
+// ===== RENDER PROJECTS =====
+function renderProjects() {
+  const container = document.getElementById('projectList');
+  if (projects.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="icon">📁</div><div>案件がありません</div></div>';
+    return;
+  }
+
+  // Get visible PIDs (non-hidden)
+  const visiblePIDs = projects.map(p => p.PID);
+
+  container.innerHTML = projects.map(proj => {
+    const pid = proj.PID;
+    const cust = customers.find(c => c.CID === proj.CID);
+    const custName = cust ? (cust.CustomerName || '') : '';
+    const prods = products.filter(p => p.PID === pid);
+
+    // Build search text
+    const searchText = [
+      pid, proj.ProjectName, proj.Quantity, proj.Unit, proj.DueDate,
+      proj.AddressJP, proj.AddressEN, proj.Memo, custName
+    ].join(' ').toLowerCase();
+
+    // Products HTML
+    let productsHTML = '';
+    if (prods.length > 0) {
+      const rows = prods.map(p => {
+        // Find materials for this product
+        const matIDs = (p.MIDs || '').split(',').map(s => s.trim()).filter(Boolean);
+        const matHTML = matIDs.map(mid => {
+          const m = materials.find(mm => mm.MID === mid);
+          if (!m) return `<li><span class="material-name">${mid}（不明）</span></li>`;
+          return `<li>
+            <span class="material-name">${m.MaterialName || mid}</span>
+            <span class="material-cost">${formatCurrency(m.CostB)}</span>
+          </li>`;
+        }).join('');
+
+        return `<tr>
+          <td style="font-weight:600;">${p.ProductName || ''}</td>
+          <td><ul class="material-list">${matHTML || '<li style="color:#999;">なし</li>'}</ul></td>
+          <td style="text-align:right;"><span class="price-tag">${formatCurrency(p.CostB)}</span></td>
+          <td style="text-align:right;"><span class="price-tag sell">${formatCurrency(p.Price)}</span></td>
+        </tr>`;
+      }).join('');
+
+      // Summary
+      const totalCostB = prods.reduce((s, p) => s + (parseFloat(p.CostB) || 0), 0);
+      const totalPrice = prods.reduce((s, p) => s + (parseFloat(p.Price) || 0), 0);
+
+      productsHTML = `
+        <div class="product-section">
+          <h4>📦 製品一覧（${prods.length}件）</h4>
+          <div class="product-table-wrapper">
+            <table class="product-table">
+              <thead><tr>
+                <th>製品名</th>
+                <th>素材</th>
+                <th style="text-align:right;">原価</th>
+                <th style="text-align:right;">売価</th>
+              </tr></thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+          <div class="summary-bar">
+            <div class="summary-chip">
+              <span class="label">原価合計:</span>
+              <span class="value cost">${formatCurrency(totalCostB)}</span>
+            </div>
+            <div class="summary-chip">
+              <span class="label">売価合計:</span>
+              <span class="value sell">${formatCurrency(totalPrice)}</span>
+            </div>
+          </div>
+        </div>`;
+    } else {
+      productsHTML = '<div class="empty-state" style="padding:20px;"><div>製品が登録されていません</div></div>';
+    }
+
+    // Address HTML
+    let addressHTML = '';
+    if (proj.AddressJP || proj.AddressEN) {
+      addressHTML = `
+        <div class="address-section">
+          <h4>📍 住所</h4>
+          <div class="address-grid">
+            ${proj.AddressJP ? `
+            <div class="address-block">
+              <div class="address-block-label">日本語</div>
+              <div class="address-block-value">${proj.AddressJP}</div>
+              <button class="copy-btn" onclick="copyText('${escapeForAttr(proj.AddressJP)}', event)">📋</button>
+            </div>` : ''}
+            ${proj.AddressEN ? `
+            <div class="address-block">
+              <div class="address-block-label">English</div>
+              <div class="address-block-value">${proj.AddressEN}</div>
+              <button class="copy-btn" onclick="copyText('${escapeForAttr(proj.AddressEN)}', event)">📋</button>
+            </div>` : ''}
+          </div>
+          ${(proj.AddressJP && proj.AddressEN) ? `
+          <button class="copy-all-btn" onclick="copyText('${escapeForAttr(proj.AddressJP + '\\n' + proj.AddressEN)}', event)">📋 両方コピー</button>
+          ` : ''}
+        </div>`;
+    }
+
+    return `
+    <div class="project-card" data-pid="${pid}" data-search="${searchText}">
+      <div class="project-header" onclick="toggleCard(this)">
+        <div>
+          <div class="project-title">${proj.ProjectName || '（無題）'}</div>
+          <div class="project-pid">${pid}</div>
+          <div class="project-customer">${custName ? '👤 ' + custName : ''}</div>
+        </div>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="project-body">
+        <div class="project-body-inner">
+          <div class="project-info">
+            <div class="info-item">
+              <div class="info-label">数量</div>
+              <div class="info-value">${proj.Quantity || '-'}${proj.Unit ? ' ' + proj.Unit : ''}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">納期</div>
+              <div class="info-value">${proj.DueDate || '-'}</div>
+            </div>
+            ${proj.Memo ? `<div class="info-item full">
+              <div class="info-label">メモ</div>
+              <div class="info-value">${proj.Memo}</div>
+            </div>` : ''}
+          </div>
+          ${addressHTML}
+          ${productsHTML}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ===== RENDER CUSTOMERS =====
+function renderCustomers() {
+  const container = document.getElementById('customerList');
+  if (customers.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="icon">👥</div><div>顧客がありません</div></div>';
+    return;
+  }
+
+  // Get visible PIDs
+  const visiblePIDs = new Set(projects.map(p => p.PID));
+
+  container.innerHTML = customers.map(cust => {
+    const cid = cust.CID;
+    // Only show projects that are not hidden
+    const custProjects = projects.filter(p => p.CID === cid);
+
+    const searchText = [
+      cid, cust.CustomerName, cust.ContactPerson, cust.Email, cust.Phone, cust.CustomerMemo
+    ].join(' ').toLowerCase();
+
+    const projectLinks = custProjects.map(p =>
+      `<button class="project-link-btn" onclick="jumpToProject('${p.PID}')">${p.ProjectName || p.PID}</button>`
+    ).join('');
+
+    return `
+    <div class="customer-card" data-cid="${cid}" data-search="${searchText}">
+      <div class="customer-header" onclick="toggleCard(this)">
+        <div>
+          <div class="customer-title">${cust.CustomerName || '（無名）'}</div>
+          <div class="customer-cid">${cid}</div>
+        </div>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="customer-body">
+        <div class="customer-body-inner">
+          <div class="customer-info">
+            <div class="info-item">
+              <div class="info-label">担当者</div>
+              <div class="info-value">${cust.ContactPerson || '-'}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">メール</div>
+              <div class="info-value">${cust.Email || '-'}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">電話</div>
+              <div class="info-value">${cust.Phone || '-'}</div>
+            </div>
+            ${cust.CustomerMemo ? `<div class="info-item full">
+              <div class="info-label">メモ</div>
+              <div class="info-value">${cust.CustomerMemo}</div>
+            </div>` : ''}
+          </div>
+          ${custProjects.length > 0 ? `
+          <div class="customer-projects-label">📁 関連案件</div>
+          <div>${projectLinks}</div>
+          ` : '<div style="color:#999;font-size:12px;">関連案件なし</div>'}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ===== RENDER MATERIALS =====
+function renderMaterials() {
+  const container = document.getElementById('materialList');
+  if (materials.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="icon">🧱</div><div>素材がありません</div></div>';
+    return;
+  }
+
+  container.innerHTML = materials.map(mat => {
+    const searchText = [
+      mat.MID, mat.MaterialName, mat.CostB, mat.MaterialMemo
+    ].join(' ').toLowerCase();
+
+    return `
+    <div class="material-card" data-mid="${mat.MID}" data-search="${searchText}">
+      <div class="material-card-header">
+        <div>
+          <div class="material-card-name">${mat.MaterialName || '（無名）'}</div>
+          <div class="material-card-mid">${mat.MID}</div>
+        </div>
+        <div class="material-card-cost">${formatCurrency(mat.CostB)}</div>
+      </div>
+      ${mat.MaterialMemo ? `<div class="material-card-info">📝 ${mat.MaterialMemo}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ===== HELPERS =====
+function toggleCard(header) {
+  const card = header.parentElement;
+  card.classList.toggle('open');
+}
+
+function formatCurrency(val) {
+  if (!val && val !== 0) return '-';
+  const num = parseFloat(val);
+  if (isNaN(num)) return val;
+  return '¥' + num.toLocaleString();
+}
+
+function escapeForAttr(str) {
+  return (str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n');
+}
+
+function copyText(text, e) {
+  if (e) e.stopPropagation();
+  const decoded = text.replace(/\\n/g, '\n');
+  navigator.clipboard.writeText(decoded).then(() => {
+    showToast('📋 コピーしました');
+  }).catch(() => {
+    showToast('⚠️ コピーに失敗しました');
+  });
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+function jumpToProject(pid) {
+  // Switch to projects tab
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.tab-btn')[0].classList.add('active');
+  document.getElementById('tab-projects').classList.add('active');
+
+  // Clear search
+  document.getElementById('searchInput').value = '';
+  filterAll();
+
+  // Find and open the project card
+  setTimeout(() => {
+    const card = document.querySelector(`.project-card[data-pid="${pid}"]`);
+    if (card) {
+      card.classList.add('open');
+      card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, 100);
+}
+
+// ===== START =====
+init();
+</script>
+</body>
+</html>
