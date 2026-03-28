@@ -3,33 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>物販データベース</title>
+<title>データベース</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; color: #333; }
 
-  .header { background: linear-gradient(135deg, #43b89c 0%, #3a9bd5 100%); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+  .header { background: linear-gradient(135deg, #e74c3c 0%, #c0392b 40%, #a93226 100%); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.15); }
   .header h1 { font-size: 1.3em; }
   .nav-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
   .nav-btn { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 8px 16px; border-radius: 20px; cursor: pointer; font-size: 0.85em; transition: all 0.3s; }
-  .nav-btn:hover, .nav-btn.active { background: white; color: #3a9bd5; }
+  .nav-btn:hover, .nav-btn.active { background: white; color: #c0392b; }
 
   .page { display: none; padding: 20px; max-width: 1200px; margin: 0 auto; }
   .page.active { display: block; }
   .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-  .card h2 { font-size: 1.1em; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #3a9bd5; color: #3a9bd5; }
+  .card h2 { font-size: 1.1em; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #c0392b; color: #c0392b; }
 
   .form-group { margin-bottom: 12px; }
   .form-group label { display: block; font-weight: 600; margin-bottom: 4px; font-size: 0.85em; color: #555; }
   .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95em; transition: border-color 0.3s; }
-  .form-group input:focus, .form-group select:focus { border-color: #3a9bd5; outline: none; box-shadow: 0 0 0 3px rgba(58,155,213,0.1); }
+  .form-group input:focus, .form-group select:focus { border-color: #c0392b; outline: none; box-shadow: 0 0 0 3px rgba(192,57,43,0.1); }
   .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
   .form-row-4 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
 
   .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.9em; font-weight: 600; transition: all 0.3s; }
-  .btn-primary { background: linear-gradient(135deg, #43b89c, #3a9bd5); color: white; }
-  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(58,155,213,0.4); }
+  .btn-primary { background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(192,57,43,0.4); }
   .btn-danger { background: #e74c3c; color: white; }
   .btn-danger:hover { background: #c0392b; }
   .btn-success { background: #27ae60; color: white; }
@@ -44,18 +44,18 @@
   table { width: 100%; border-collapse: collapse; }
   th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #eee; font-size: 0.85em; }
   th { background: #f8f9fa; font-weight: 600; color: #555; position: sticky; top: 0; }
-  tr:hover { background: #f8f9ff; }
+  tr:hover { background: #fff5f5; }
 
   .toast { position: fixed; bottom: 20px; right: 20px; padding: 12px 24px; border-radius: 8px; color: white; font-weight: 600; z-index: 10000; transform: translateX(400px); transition: transform 0.4s; }
   .toast.show { transform: translateX(0); }
   .toast-success { background: #27ae60; }
   .toast-error { background: #e74c3c; }
-  .toast-info { background: #3498db; }
+  .toast-info { background: #c0392b; }
 
   .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 5000; justify-content: center; align-items: center; }
   .modal-overlay.active { display: flex; }
   .modal-content { background: white; border-radius: 12px; padding: 24px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; }
-  .modal-content h3 { margin-bottom: 15px; color: #3a9bd5; }
+  .modal-content h3 { margin-bottom: 15px; color: #c0392b; }
   .modal-content.modal-lg { max-width: 95%; width: 95%; max-height: 95vh; }
 
   .status-badge { padding: 4px 12px; border-radius: 12px; font-size: 0.8em; font-weight: 600; display: inline-block; }
@@ -69,16 +69,16 @@
   .tag-count { background: rgba(0,0,0,0.15); padding: 1px 6px; border-radius: 8px; margin-left: 4px; font-size: 0.85em; }
 
   .tag-stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
-  .tag-stat-card { text-align: center; padding: 14px 10px; background: linear-gradient(135deg, #f8f9ff, #eef0f8); border-radius: 10px; border: 1px solid #e0e4f0; }
+  .tag-stat-card { text-align: center; padding: 14px 10px; background: linear-gradient(135deg, #fff5f5, #fce4e4); border-radius: 10px; border: 1px solid #f0d0d0; }
   .tag-stat-card .ts-label { font-size: 0.72em; color: #888; margin-bottom: 4px; }
-  .tag-stat-card .ts-value { font-size: 1.15em; font-weight: 700; color: #3a9bd5; }
+  .tag-stat-card .ts-value { font-size: 1.15em; font-weight: 700; color: #c0392b; }
   .tag-stat-card.wide { grid-column: span 3; }
 
-  .product-item { background: #f8f9ff; border: 1px solid #e0e4f0; border-radius: 10px; padding: 16px; margin-bottom: 12px; position: relative; }
+  .product-item { background: #fff5f5; border: 1px solid #f0d0d0; border-radius: 10px; padding: 16px; margin-bottom: 12px; position: relative; }
   .product-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-  .product-item-num { font-weight: 700; color: #3a9bd5; font-size: 0.9em; }
+  .product-item-num { font-weight: 700; color: #c0392b; font-size: 0.9em; }
   .product-item .form-row, .product-item .form-row-3, .product-item .form-row-4 { margin-bottom: 8px; }
-  .product-subtotals { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; padding: 10px; background: #eef0f8; border-radius: 8px; }
+  .product-subtotals { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; padding: 10px; background: #fce4e4; border-radius: 8px; }
   .product-subtotals .sub-item { text-align: center; }
   .product-subtotals .sub-label { font-size: 0.72em; color: #777; }
   .product-subtotals .sub-value { font-size: 0.95em; font-weight: 700; }
@@ -97,9 +97,9 @@
 
   .project-card { background: white; border-radius: 10px; margin-bottom: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); overflow: hidden; }
   .project-card-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; cursor: pointer; transition: background 0.2s; flex-wrap: wrap; gap: 8px; }
-  .project-card-header:hover { background: #f8f9ff; }
+  .project-card-header:hover { background: #fff5f5; }
   .project-card-header .left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-  .project-card-header .pid { font-weight: 700; color: #3a9bd5; font-size: 0.9em; }
+  .project-card-header .pid { font-weight: 700; color: #c0392b; font-size: 0.9em; }
   .project-card-header .pname { font-weight: 600; font-size: 0.95em; }
   .project-card-header .customer { font-size: 0.85em; color: #777; }
   .project-card-header .deadline-info { font-size: 0.8em; font-weight: 600; }
@@ -107,9 +107,9 @@
   .project-card-body.open { display: block; }
 
   .detail-view-table { width: 100%; border-collapse: collapse; font-size: 0.82em; margin-top: 10px; }
-  .detail-view-table th { background: #3a9bd5; color: white; padding: 8px; }
+  .detail-view-table th { background: #c0392b; color: white; padding: 8px; }
   .detail-view-table td { padding: 8px; border-bottom: 1px solid #eee; }
-  .detail-view-table tr:nth-child(even) { background: #f0f2ff; }
+  .detail-view-table tr:nth-child(even) { background: #fff5f5; }
 
   .summary-box { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
   .summary-item { text-align: center; padding: 12px; background: white; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
@@ -122,35 +122,35 @@
 
   .loading { text-align: center; padding: 40px; color: #999; }
 
-  .edit-modal-section { background: #f8f9ff; border: 1px solid #e0e4f0; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
-  .edit-modal-section h4 { font-size: 0.95em; color: #3a9bd5; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #3a9bd5; }
+  .edit-modal-section { background: #fff5f5; border: 1px solid #f0d0d0; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  .edit-modal-section h4 { font-size: 0.95em; color: #c0392b; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #c0392b; }
 
   .address-display { font-size: 0.85em; color: #555; padding: 4px 0; }
   .address-display .addr-icon { margin-right: 4px; }
 
   .addr-field-wrap { display: flex; gap: 6px; align-items: center; }
   .addr-field-wrap input { flex: 1; }
-  .btn-copy { background: #3a9bd5; color: white; border: none; border-radius: 6px; padding: 8px 10px; cursor: pointer; font-size: 0.85em; white-space: nowrap; transition: all 0.2s; }
-  .btn-copy:hover { background: #2d7fb8; transform: scale(1.05); }
+  .btn-copy { background: #c0392b; color: white; border: none; border-radius: 6px; padding: 8px 10px; cursor: pointer; font-size: 0.85em; white-space: nowrap; transition: all 0.2s; }
+  .btn-copy:hover { background: #a93226; transform: scale(1.05); }
   .btn-copy:active { transform: scale(0.95); }
-  .btn-copy-both { background: linear-gradient(135deg, #43b89c, #3a9bd5); color: white; border: none; border-radius: 6px; padding: 8px 14px; cursor: pointer; font-size: 0.85em; white-space: nowrap; transition: all 0.2s; font-weight: 600; }
-  .btn-copy-both:hover { transform: scale(1.05); box-shadow: 0 2px 8px rgba(58,155,213,0.4); }
+  .btn-copy-both { background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; border: none; border-radius: 6px; padding: 8px 14px; cursor: pointer; font-size: 0.85em; white-space: nowrap; transition: all 0.2s; font-weight: 600; }
+  .btn-copy-both:hover { transform: scale(1.05); box-shadow: 0 2px 8px rgba(192,57,43,0.4); }
   .btn-copy-both:active { transform: scale(0.95); }
 
   .addr-line { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
   .addr-line .addr-text { flex: 1; word-break: break-all; }
   .btn-copy-inline { background: none; border: none; cursor: pointer; font-size: 1em; padding: 2px 4px; border-radius: 4px; transition: background 0.2s; }
-  .btn-copy-inline:hover { background: #e0e4f0; }
+  .btn-copy-inline:hover { background: #fce4e4; }
 
   .cust-card { background: white; border-radius: 10px; margin-bottom: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); overflow: hidden; }
   .cust-card-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; cursor: pointer; transition: background 0.2s; flex-wrap: wrap; gap: 8px; }
-  .cust-card-header:hover { background: #f8f9ff; }
+  .cust-card-header:hover { background: #fff5f5; }
   .cust-card-header .left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-  .cust-card-header .cid { font-weight: 700; color: #3a9bd5; font-size: 0.9em; }
+  .cust-card-header .cid { font-weight: 700; color: #c0392b; font-size: 0.9em; }
   .cust-card-header .cname { font-weight: 600; font-size: 0.95em; }
   .cust-card-header .ccontact { font-size: 0.85em; color: #777; }
   .cust-card-header .right { display: flex; align-items: center; gap: 8px; }
-  .cust-card-header .project-count-badge { background: #3a9bd5; color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.8em; font-weight: 600; }
+  .cust-card-header .project-count-badge { background: #c0392b; color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.8em; font-weight: 600; }
   .cust-card-body { display: none; padding: 18px; border-top: 1px solid #eee; background: #fafbfc; }
   .cust-card-body.open { display: block; }
   .cust-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; font-size: 0.85em; }
@@ -158,15 +158,15 @@
   .cust-detail-grid .cd-label { font-weight: 600; color: #555; font-size: 0.8em; }
   .cust-detail-grid .cd-value { margin-top: 2px; }
   .cust-related-projects { margin-top: 10px; }
-  .cust-related-projects h4 { font-size: 0.9em; color: #3a9bd5; margin-bottom: 8px; }
+  .cust-related-projects h4 { font-size: 0.9em; color: #c0392b; margin-bottom: 8px; }
   .cust-related-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: white; border-radius: 8px; margin-bottom: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s; }
-  .cust-related-item:hover { background: #f0f2ff; transform: translateX(4px); }
+  .cust-related-item:hover { background: #fff5f5; transform: translateX(4px); }
   .cust-related-item .cri-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  .cust-related-item .cri-pid { font-weight: 700; color: #3a9bd5; font-size: 0.85em; }
+  .cust-related-item .cri-pid { font-weight: 700; color: #c0392b; font-size: 0.85em; }
   .cust-related-item .cri-name { font-size: 0.9em; }
   .cust-related-item .cri-right { display: flex; align-items: center; gap: 10px; }
   .cust-related-item .cri-price { font-weight: 700; font-size: 0.9em; }
-  .cust-related-item .cri-arrow { color: #3a9bd5; font-size: 1.1em; }
+  .cust-related-item .cri-arrow { color: #c0392b; font-size: 1.1em; }
 
   @media (max-width: 768px) {
     .form-row, .form-row-3, .form-row-4 { grid-template-columns: 1fr; }
@@ -185,7 +185,7 @@
 <body>
 
 <div class="header">
-<h1 style="margin:0;font-size:1.3rem;">物販データベース</h1>
+<h1 style="margin:0;font-size:1.3rem;">データベース</h1>
   <div class="nav-buttons">
     <button class="nav-btn active" onclick="showPage('register')">📝 登録</button>
     <button class="nav-btn" onclick="showPage('list')">📋 一覧</button>
@@ -440,12 +440,41 @@
 <script>
 const API = 'https://sheetdb.io/api/v1/16f9oq61xmnqu';
 let customersCache = [];
+let allCustomersRaw = [];
 let masterCache = [];
 let productsCache = null;
 let pcCache = [];
+let allPcRaw = [];
 let editingPID = null;
 let editDetailCounter = 0;
 let editingCustCID = null;
+
+// Hidden CID set for filtering
+let hiddenCIDs = new Set();
+let hiddenPIDs = new Set();
+
+function buildHiddenSets() {
+  hiddenCIDs = new Set();
+  hiddenPIDs = new Set();
+  // Hidden customers
+  allCustomersRaw.forEach(c => {
+    if ((c.Hidden || '').toLowerCase() === 'true') hiddenCIDs.add(c.CID);
+  });
+  // Hidden projects (directly hidden OR belonging to hidden customer)
+  allPcRaw.forEach(pc => {
+    if ((pc.Hidden || '').toLowerCase() === 'true' || hiddenCIDs.has(pc.CID)) {
+      hiddenPIDs.add(pc.PID);
+    }
+  });
+}
+
+function getVisibleCustomers() {
+  return allCustomersRaw.filter(c => (c.Hidden || '').toLowerCase() !== 'true');
+}
+
+function getVisiblePCs() {
+  return allPcRaw.filter(pc => !hiddenPIDs.has(pc.PID));
+}
 
 function showPage(page) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -574,9 +603,12 @@ async function loadCustomers() {
       fetch(API + '?sheet=ProjectCustomer'),
       fetch(API + '?sheet=Products')
     ]);
-    customersCache = await custRes.json();
-    pcCache = await pcRes.json();
+    allCustomersRaw = await custRes.json();
+    allPcRaw = await pcRes.json();
     if (!productsCache) productsCache = await prodRes.json();
+    buildHiddenSets();
+    customersCache = getVisibleCustomers();
+    pcCache = getVisiblePCs();
     renderCustomerAccordion();
     const newId = await generateId('Customers', 'C', 'CID');
     document.getElementById('cust-cid').value = newId;
@@ -601,11 +633,9 @@ function renderCustomerAccordion() {
     container.innerHTML = '<p style="color:#999;text-align:center;padding:20px;">該当なし</p>';
     return;
   }
-  // Filter out hidden projects from customer related items
-  const visiblePCs = pcCache.filter(pc => (pc.Hidden || '').toLowerCase() !== 'true');
 
   container.innerHTML = filtered.map(c => {
-    const relatedPCs = visiblePCs.filter(pc => pc.CID === c.CID);
+    const relatedPCs = pcCache.filter(pc => pc.CID === c.CID);
     const projectCount = relatedPCs.length;
     const addrJP = c.AddressJP || '';
     const addrEN = c.AddressEN || '';
@@ -681,7 +711,7 @@ function jumpToProject(pid) {
         card.scrollIntoView({ behavior: 'smooth', block: 'center' });
         const body = card.querySelector('.project-card-body');
         if (body && !body.classList.contains('open')) body.classList.add('open');
-        card.style.boxShadow = '0 0 0 3px #3a9bd5';
+        card.style.boxShadow = '0 0 0 3px #c0392b';
         setTimeout(() => { card.style.boxShadow = ''; }, 3000);
       }
     }, 500);
@@ -739,7 +769,8 @@ async function saveCustomer() {
     ContactPerson: document.getElementById('cust-contact').value.trim(),
     AddressJP: document.getElementById('cust-address-jp').value.trim(),
     AddressEN: document.getElementById('cust-address-en').value.trim(),
-    Memo: document.getElementById('cust-memo').value.trim()
+    Memo: document.getElementById('cust-memo').value.trim(),
+    Hidden: ''
   };
   try {
     await fetch(API + '?sheet=Customers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data }) });
@@ -773,6 +804,16 @@ async function loadMaster() {
     const res = await fetch(API + '?sheet=Master');
     masterCache = await res.json();
     if (!productsCache) { const pRes = await fetch(API + '?sheet=Products'); productsCache = await pRes.json(); }
+    // Also load hidden sets if not yet loaded
+    if (allPcRaw.length === 0) {
+      const pcRes = await fetch(API + '?sheet=ProjectCustomer');
+      allPcRaw = await pcRes.json();
+    }
+    if (allCustomersRaw.length === 0) {
+      const custRes = await fetch(API + '?sheet=Customers');
+      allCustomersRaw = await custRes.json();
+    }
+    buildHiddenSets();
     renderMasterList(); populateMasterCatDropdown();
   } catch (e) { toast('マスタ読み込みエラー', 'error'); }
 }
@@ -780,14 +821,18 @@ async function loadMaster() {
 function renderMasterList() {
   const categories = {};
   masterCache.forEach(m => { if (!categories[m.CategoryName]) categories[m.CategoryName] = []; if (m.TagName) categories[m.CategoryName].push(m); });
-  const colors = ['#3a9bd5','#43b89c','#f093fb','#4facfe','#43e97b','#fa709a','#fee140','#a18cd1'];
+  const colors = ['#c0392b','#e74c3c','#d35400','#e67e22','#f39c12','#c0392b','#a93226','#922b21'];
   let ci = 0, html = '';
+
+  // Filter products to only visible ones for tag counts
+  const visibleProducts = productsCache ? productsCache.filter(p => !hiddenPIDs.has(p.PID)) : [];
+
   for (const cat in categories) {
     const color = colors[ci++ % colors.length];
     html += `<div style="margin-bottom:15px;"><strong style="color:${color};">📁 ${cat}</strong>
       <button class="btn btn-danger btn-sm" onclick="deleteCategory('${cat}')" style="margin-left:8px;">🗑️</button><div style="margin-top:6px;">`;
     categories[cat].forEach(tag => {
-      const count = productsCache ? productsCache.filter(p => p.Tag === tag.TagName).length : 0;
+      const count = visibleProducts.filter(p => p.Tag === tag.TagName).length;
       html += `<span class="tag-badge" style="background:${color}22;color:${color};border:1px solid ${color}44;" onclick="showTagDetail('${tag.TagName}')">${tag.TagName}<span class="tag-count">${count}</span>
         <span onclick="event.stopPropagation();deleteTag('${tag.MID}')" style="cursor:pointer;margin-left:4px;">✕</span></span>`;
     });
@@ -834,7 +879,9 @@ async function deleteTag(mid) {
 
 function showTagDetail(tagName) {
   if (!productsCache) return;
-  const items = productsCache.filter(p => p.Tag === tagName);
+  // Filter to only visible (non-hidden) products
+  const visibleProducts = productsCache.filter(p => !hiddenPIDs.has(p.PID));
+  const items = visibleProducts.filter(p => p.Tag === tagName);
   const pids = [...new Set(items.map(i => i.PID))];
   let body = '';
   if (items.length > 0) {
@@ -879,8 +926,14 @@ async function initRegister() {
   document.getElementById('reg-address-en').value = '';
 
   try {
-    const res = await fetch(API + '?sheet=Customers');
-    customersCache = await res.json();
+    const [custRes, pcRes] = await Promise.all([
+      fetch(API + '?sheet=Customers'),
+      fetch(API + '?sheet=ProjectCustomer')
+    ]);
+    allCustomersRaw = await custRes.json();
+    allPcRaw = await pcRes.json();
+    buildHiddenSets();
+    customersCache = getVisibleCustomers();
     document.getElementById('reg-customer').innerHTML = '<option value="">-- 顧客を選択 --</option>' +
       customersCache.map(c => `<option value="${c.CID}">${c.CustomerName}</option>`).join('');
   } catch (e) {}
@@ -1029,13 +1082,13 @@ async function loadList() {
     const prodData = await prodRes.json();
     const custData = await custRes.json();
     productsCache = prodData;
-    customersCache = custData;
-    pcCache = pcData;
+    allCustomersRaw = custData;
+    allPcRaw = pcData;
+    buildHiddenSets();
+    customersCache = getVisibleCustomers();
+    pcCache = getVisiblePCs();
 
-    // Filter out hidden projects
-    const visiblePC = pcData.filter(pc => (pc.Hidden || '').toLowerCase() !== 'true');
-
-    listData = visiblePC.map(pc => {
+    listData = pcCache.map(pc => {
       const customer = custData.find(c => c.CID === pc.CID);
       const products = prodData.filter(p => p.PID === pc.PID);
       const totalCostB = products.reduce((s, p) => s + Number(p.SubtotalB || 0), 0);
