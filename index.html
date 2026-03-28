@@ -449,27 +449,26 @@ let editingPID = null;
 let editDetailCounter = 0;
 let editingCustCID = null;
 
-// Hidden CID set for filtering
+// Hidden CID/PID sets for filtering
 let hiddenCIDs = new Set();
 let hiddenPIDs = new Set();
+let dataLoaded = { customers: false, pc: false };
 
 function buildHiddenSets() {
   hiddenCIDs = new Set();
   hiddenPIDs = new Set();
-  // Hidden customers
   allCustomersRaw.forEach(c => {
-    if ((c.Hidden || '').toLowerCase() === 'true') hiddenCIDs.add(c.CID);
+    if ((c.Hidden || '').toString().toLowerCase() === 'true') hiddenCIDs.add(c.CID);
   });
-  // Hidden projects (directly hidden OR belonging to hidden customer)
   allPcRaw.forEach(pc => {
-    if ((pc.Hidden || '').toLowerCase() === 'true' || hiddenCIDs.has(pc.CID)) {
+    if ((pc.Hidden || '').toString().toLowerCase() === 'true' || hiddenCIDs.has(pc.CID)) {
       hiddenPIDs.add(pc.PID);
     }
   });
 }
 
 function getVisibleCustomers() {
-  return allCustomersRaw.filter(c => (c.Hidden || '').toLowerCase() !== 'true');
+  return allCustomersRaw.filter(c => !hiddenCIDs.has(c.CID));
 }
 
 function getVisiblePCs() {
@@ -573,7 +572,7 @@ async function generateId(sheet, prefix, idCol) {
   try {
     const res = await fetch(API + '?sheet=' + sheet);
     const data = await res.json();
-    if (!data || data.length === 0) return prefix + '001';
+    if (!data || !Array.isArray(data) || data.length === 0) return prefix + '001';
     const nums = data.map(r => parseInt((r[idCol] || '').replace(prefix, '')) || 0);
     return prefix + String(Math.max(...nums) + 1).padStart(3, '0');
   } catch (e) { return prefix + '001'; }
@@ -593,6 +592,12 @@ function escHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
+// Safe string for use inside onclick attributes (escape backslash, single quote)
+function escAttr(s) {
+  if (!s) return '';
+  return s.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n');
+}
+
 // ============================================================
 // CUSTOMER
 // ============================================================
@@ -604,8 +609,13 @@ async function loadCustomers() {
       fetch(API + '?sheet=Products')
     ]);
     allCustomersRaw = await custRes.json();
+    if (!Array.isArray(allCustomersRaw)) allCustomersRaw = [];
     allPcRaw = await pcRes.json();
-    if (!productsCache) productsCache = await prodRes.json();
+    if (!Array.isArray(allPcRaw)) allPcRaw = [];
+    const prodData = await prodRes.json();
+    productsCache = Array.isArray(prodData) ? prodData : [];
+    dataLoaded.customers = true;
+    dataLoaded.pc = true;
     buildHiddenSets();
     customersCache = getVisibleCustomers();
     pcCache = getVisiblePCs();
@@ -639,8 +649,6 @@ function renderCustomerAccordion() {
     const projectCount = relatedPCs.length;
     const addrJP = c.AddressJP || '';
     const addrEN = c.AddressEN || '';
-    const escapedAddrJP = escHtml(addrJP);
-    const escapedAddrEN = escHtml(addrEN);
 
     let relatedHtml = '';
     if (projectCount > 0) {
@@ -651,11 +659,11 @@ function renderCustomerAccordion() {
         const totalPrice = prods.reduce((s, p) => s + Number(p.SubtotalPrice || 0), 0);
         const statusClass = 'status-' + (pc.Status || '');
         relatedHtml += `
-          <div class="cust-related-item" onclick="jumpToProject('${pc.PID}')">
+          <div class="cust-related-item" onclick="jumpToProject('${escAttr(pc.PID)}')">
             <div class="cri-left">
-              <span class="cri-pid">${pc.PID}</span>
+              <span class="cri-pid">${escHtml(pc.PID)}</span>
               <span class="cri-name">${escHtml(pName)}</span>
-              <span class="status-badge ${statusClass}">${pc.Status || ''}</span>
+              <span class="status-badge ${statusClass}">${escHtml(pc.Status || '')}</span>
             </div>
             <div class="cri-right">
               <span class="cri-price">${fmt(totalPrice)}</span>
@@ -669,28 +677,28 @@ function renderCustomerAccordion() {
     }
 
     return `
-    <div class="cust-card" id="cust-card-${c.CID}">
+    <div class="cust-card" id="cust-card-${escHtml(c.CID)}">
       <div class="cust-card-header" onclick="toggleCustCard(this)">
         <div class="left">
-          <span class="cid">${c.CID}</span>
+          <span class="cid">${escHtml(c.CID)}</span>
           <span class="cname">${escHtml(c.CustomerName)}</span>
           <span class="ccontact">👤 ${escHtml(c.ContactPerson || '')}</span>
         </div>
         <div class="right">
           <span class="project-count-badge">${projectCount}件</span>
-          <button class="btn btn-warning btn-sm" onclick="event.stopPropagation();openCustEditModal('${c.CID}')">✏️</button>
-          <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteCustomer('${c.CID}', ${projectCount})">🗑️</button>
+          <button class="btn btn-warning btn-sm" onclick="event.stopPropagation();openCustEditModal('${escAttr(c.CID)}')">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteCustomer('${escAttr(c.CID)}', ${projectCount})">🗑️</button>
         </div>
       </div>
       <div class="cust-card-body">
         <div class="cust-detail-grid">
           <div class="cd-item"><div class="cd-label">顧客名</div><div class="cd-value">${escHtml(c.CustomerName)}</div></div>
           <div class="cd-item"><div class="cd-label">担当者</div><div class="cd-value">${escHtml(c.ContactPerson || '—')}</div></div>
-          <div class="cd-item"><div class="cd-label">📍 住所（日本語）</div><div class="cd-value">${escapedAddrJP || '—'} ${addrJP ? `<button class="btn-copy-inline" onclick="event.stopPropagation();copyValue('${escapedAddrJP.replace(/'/g, "\\'")}')" title="JPコピー">📋</button>` : ''}</div></div>
-          <div class="cd-item"><div class="cd-label">📍 住所（英語）</div><div class="cd-value">${escapedAddrEN || '—'} ${addrEN ? `<button class="btn-copy-inline" onclick="event.stopPropagation();copyValue('${escapedAddrEN.replace(/'/g, "\\'")}')" title="ENコピー">📋</button>` : ''}</div></div>
+          <div class="cd-item"><div class="cd-label">📍 住所（日本語）</div><div class="cd-value">${escHtml(addrJP) || '—'} ${addrJP ? `<button class="btn-copy-inline" onclick="event.stopPropagation();copyValue('${escAttr(addrJP)}')" title="JPコピー">📋</button>` : ''}</div></div>
+          <div class="cd-item"><div class="cd-label">📍 住所（英語）</div><div class="cd-value">${escHtml(addrEN) || '—'} ${addrEN ? `<button class="btn-copy-inline" onclick="event.stopPropagation();copyValue('${escAttr(addrEN)}')" title="ENコピー">📋</button>` : ''}</div></div>
           <div class="cd-item" style="grid-column: span 2;"><div class="cd-label">メモ</div><div class="cd-value">${escHtml(c.Memo || '—')}</div></div>
         </div>
-        ${(addrJP || addrEN) ? `<button class="btn-copy-both" onclick="event.stopPropagation();copyBothValues('${escapedAddrJP.replace(/'/g, "\\'")}','${escapedAddrEN.replace(/'/g, "\\'")}')" style="margin-bottom:12px;">📋 住所を両方コピー（JP＋EN）</button>` : ''}
+        ${(addrJP || addrEN) ? `<button class="btn-copy-both" onclick="event.stopPropagation();copyBothValues('${escAttr(addrJP)}','${escAttr(addrEN)}')" style="margin-bottom:12px;">📋 住所を両方コピー（JP＋EN）</button>` : ''}
         ${relatedHtml}
       </div>
     </div>`;
@@ -783,8 +791,10 @@ async function deleteCustomer(cid, projectCount) {
   let msg = cid + ' を削除しますか？';
   if (projectCount > 0) msg += '\n\n⚠️ この顧客には ' + projectCount + ' 件の関連案件があります。';
   if (!confirm(msg)) return;
-  await fetch(API + '/CID/' + cid + '?sheet=Customers', { method: 'DELETE' });
-  toast('削除しました'); loadCustomers();
+  try {
+    await fetch(API + '/CID/' + cid + '?sheet=Customers', { method: 'DELETE' });
+    toast('削除しました'); loadCustomers();
+  } catch (e) { toast('削除エラー', 'error'); }
 }
 
 function resetCustomerForm() {
@@ -801,18 +811,31 @@ function resetCustomerForm() {
 // ============================================================
 async function loadMaster() {
   try {
-    const res = await fetch(API + '?sheet=Master');
-    masterCache = await res.json();
-    if (!productsCache) { const pRes = await fetch(API + '?sheet=Products'); productsCache = await pRes.json(); }
-    // Also load hidden sets if not yet loaded
-    if (allPcRaw.length === 0) {
-      const pcRes = await fetch(API + '?sheet=ProjectCustomer');
-      allPcRaw = await pcRes.json();
+    const fetches = [fetch(API + '?sheet=Master')];
+    if (!productsCache) fetches.push(fetch(API + '?sheet=Products'));
+    if (!dataLoaded.pc) fetches.push(fetch(API + '?sheet=ProjectCustomer'));
+    if (!dataLoaded.customers) fetches.push(fetch(API + '?sheet=Customers'));
+
+    const results = await Promise.all(fetches);
+    let idx = 0;
+    const masterData = await results[idx++].json();
+    masterCache = Array.isArray(masterData) ? masterData : [];
+
+    if (!productsCache) {
+      const prodData = await results[idx++].json();
+      productsCache = Array.isArray(prodData) ? prodData : [];
     }
-    if (allCustomersRaw.length === 0) {
-      const custRes = await fetch(API + '?sheet=Customers');
-      allCustomersRaw = await custRes.json();
+    if (!dataLoaded.pc) {
+      const pcData = await results[idx++].json();
+      allPcRaw = Array.isArray(pcData) ? pcData : [];
+      dataLoaded.pc = true;
     }
+    if (!dataLoaded.customers) {
+      const custData = await results[idx++].json();
+      allCustomersRaw = Array.isArray(custData) ? custData : [];
+      dataLoaded.customers = true;
+    }
+
     buildHiddenSets();
     renderMasterList(); populateMasterCatDropdown();
   } catch (e) { toast('マスタ読み込みエラー', 'error'); }
@@ -824,17 +847,16 @@ function renderMasterList() {
   const colors = ['#c0392b','#e74c3c','#d35400','#e67e22','#f39c12','#c0392b','#a93226','#922b21'];
   let ci = 0, html = '';
 
-  // Filter products to only visible ones for tag counts
   const visibleProducts = productsCache ? productsCache.filter(p => !hiddenPIDs.has(p.PID)) : [];
 
   for (const cat in categories) {
     const color = colors[ci++ % colors.length];
-    html += `<div style="margin-bottom:15px;"><strong style="color:${color};">📁 ${cat}</strong>
-      <button class="btn btn-danger btn-sm" onclick="deleteCategory('${cat}')" style="margin-left:8px;">🗑️</button><div style="margin-top:6px;">`;
+    html += `<div style="margin-bottom:15px;"><strong style="color:${color};">📁 ${escHtml(cat)}</strong>
+      <button class="btn btn-danger btn-sm" onclick="deleteCategory('${escAttr(cat)}')" style="margin-left:8px;">🗑️</button><div style="margin-top:6px;">`;
     categories[cat].forEach(tag => {
       const count = visibleProducts.filter(p => p.Tag === tag.TagName).length;
-      html += `<span class="tag-badge" style="background:${color}22;color:${color};border:1px solid ${color}44;" onclick="showTagDetail('${tag.TagName}')">${tag.TagName}<span class="tag-count">${count}</span>
-        <span onclick="event.stopPropagation();deleteTag('${tag.MID}')" style="cursor:pointer;margin-left:4px;">✕</span></span>`;
+      html += `<span class="tag-badge" style="background:${color}22;color:${color};border:1px solid ${color}44;" onclick="showTagDetail('${escAttr(tag.TagName)}')">${escHtml(tag.TagName)}<span class="tag-count">${count}</span>
+        <span onclick="event.stopPropagation();deleteTag('${escAttr(tag.MID)}')" style="cursor:pointer;margin-left:4px;">✕</span></span>`;
     });
     html += '</div></div>';
   }
@@ -843,7 +865,7 @@ function renderMasterList() {
 
 function populateMasterCatDropdown() {
   const cats = [...new Set(masterCache.map(m => m.CategoryName))];
-  document.getElementById('master-tag-cat').innerHTML = cats.map(c => `<option>${c}</option>`).join('');
+  document.getElementById('master-tag-cat').innerHTML = cats.map(c => `<option>${escHtml(c)}</option>`).join('');
 }
 
 async function saveCategory() {
@@ -879,7 +901,6 @@ async function deleteTag(mid) {
 
 function showTagDetail(tagName) {
   if (!productsCache) return;
-  // Filter to only visible (non-hidden) products
   const visibleProducts = productsCache.filter(p => !hiddenPIDs.has(p.PID));
   const items = visibleProducts.filter(p => p.Tag === tagName);
   const pids = [...new Set(items.map(i => i.PID))];
@@ -898,7 +919,7 @@ function showTagDetail(tagName) {
         <div class="tag-stat-card"><div class="ts-label">🏷️ 平均単価</div><div class="ts-value">${fmt(avgPrice)}</div></div>
       </div>`;
     body += `<table class="detail-view-table"><thead><tr><th>PID</th><th>商品名</th><th>数量</th><th>原価</th><th>単価</th></tr></thead><tbody>`;
-    items.forEach(i => { body += `<tr><td>${i.PID}</td><td>${i.ProductName || ''}</td><td>${i.Qty}</td><td>${fmt(i.CostB)}</td><td>${fmt(i.Price)}</td></tr>`; });
+    items.forEach(i => { body += `<tr><td>${escHtml(i.PID)}</td><td>${escHtml(i.ProductName || '')}</td><td>${i.Qty}</td><td>${fmt(i.CostB)}</td><td>${fmt(i.Price)}</td></tr>`; });
     body += '</tbody></table>';
   } else {
     body += `<div class="tag-stats-grid"><div class="tag-stat-card wide"><div class="ts-label">📋 使用案件数</div><div class="ts-value" style="color:#999;">0 件</div></div></div><p style="color:#999;text-align:center;">使用データなし</p>`;
@@ -931,16 +952,21 @@ async function initRegister() {
       fetch(API + '?sheet=ProjectCustomer')
     ]);
     allCustomersRaw = await custRes.json();
+    if (!Array.isArray(allCustomersRaw)) allCustomersRaw = [];
     allPcRaw = await pcRes.json();
+    if (!Array.isArray(allPcRaw)) allPcRaw = [];
+    dataLoaded.customers = true;
+    dataLoaded.pc = true;
     buildHiddenSets();
     customersCache = getVisibleCustomers();
     document.getElementById('reg-customer').innerHTML = '<option value="">-- 顧客を選択 --</option>' +
-      customersCache.map(c => `<option value="${c.CID}">${c.CustomerName}</option>`).join('');
+      customersCache.map(c => `<option value="${escHtml(c.CID)}">${escHtml(c.CustomerName)}</option>`).join('');
   } catch (e) {}
 
   try {
     const res = await fetch(API + '?sheet=Master');
-    masterCache = await res.json();
+    const data = await res.json();
+    masterCache = Array.isArray(data) ? data : [];
   } catch (e) {}
 
   detailCounter = 0;
@@ -957,12 +983,12 @@ function onRegCustomerChange() {
 
 function getCategoryOptions() {
   const cats = [...new Set(masterCache.map(m => m.CategoryName))];
-  return '<option value="">-- カテゴリ --</option>' + cats.map(c => `<option>${c}</option>`).join('');
+  return '<option value="">-- カテゴリ --</option>' + cats.map(c => `<option>${escHtml(c)}</option>`).join('');
 }
 
 function getTagOptions(category) {
   const tags = masterCache.filter(m => m.CategoryName === category && m.TagName);
-  return '<option value="">-- タグ --</option>' + tags.map(t => `<option>${t.TagName}</option>`).join('');
+  return '<option value="">-- タグ --</option>' + tags.map(t => `<option>${escHtml(t.TagName)}</option>`).join('');
 }
 
 function addDetailRow() {
@@ -1049,8 +1075,8 @@ async function saveProject() {
       PID: pid, ProjectName: projectName,
       Category: item.querySelector('.d-category').value, Tag: item.querySelector('.d-tag').value,
       ProductName: item.querySelector('.d-name').value.trim(),
-      Qty: qty, CostA: 0, CostB: costB, Price: price,
-      SubtotalA: 0, SubtotalB: qty * costB, SubtotalPrice: qty * price,
+      Qty: qty, CostA: '', CostB: costB, Price: price,
+      SubtotalA: '', SubtotalB: qty * costB, SubtotalPrice: qty * price,
       Memo: item.querySelector('.d-memo').value.trim()
     });
   });
@@ -1081,9 +1107,11 @@ async function loadList() {
     const pcData = await pcRes.json();
     const prodData = await prodRes.json();
     const custData = await custRes.json();
-    productsCache = prodData;
-    allCustomersRaw = custData;
-    allPcRaw = pcData;
+    productsCache = Array.isArray(prodData) ? prodData : [];
+    allCustomersRaw = Array.isArray(custData) ? custData : [];
+    allPcRaw = Array.isArray(pcData) ? pcData : [];
+    dataLoaded.customers = true;
+    dataLoaded.pc = true;
     buildHiddenSets();
     customersCache = getVisibleCustomers();
     pcCache = getVisiblePCs();
@@ -1127,8 +1155,7 @@ function getDeadlineInfo(deadline, status) {
 
 function renderAddressLine(label, value) {
   if (!value) return '';
-  const escaped = escHtml(value);
-  return `<div class="addr-line"><span class="addr-icon">📍</span><strong>${label}:</strong> <span class="addr-text">${escaped}</span><button class="btn-copy-inline" onclick="event.stopPropagation();copyValue('${escaped.replace(/'/g, "\\'")}')" title="コピー">📋</button></div>`;
+  return `<div class="addr-line"><span class="addr-icon">📍</span><strong>${label}:</strong> <span class="addr-text">${escHtml(value)}</span><button class="btn-copy-inline" onclick="event.stopPropagation();copyValue('${escAttr(value)}')" title="コピー">📋</button></div>`;
 }
 
 function renderList(data) {
@@ -1140,19 +1167,17 @@ function renderList(data) {
     const deadlineDisplay = formatDate(d.Deadline) || '未設定';
     const addrJP = d.DeliveryAddressJP || '';
     const addrEN = d.DeliveryAddressEN || '';
-    const escapedJP = escHtml(addrJP);
-    const escapedEN = escHtml(addrEN);
     return `
-    <div class="project-card" id="card-${d.PID}">
+    <div class="project-card" id="card-${escHtml(d.PID)}">
       <div class="project-card-header" onclick="toggleCard(this)">
         <div class="left">
-          <span class="pid">${d.PID}</span>
+          <span class="pid">${escHtml(d.PID)}</span>
           <span class="pname">${escHtml(pn)}</span>
           <span class="customer">👤 ${escHtml(d.CustomerName)}</span>
           ${dl.text ? `<span class="deadline-info ${dl.cls}">${dl.text}</span>` : ''}
         </div>
         <div style="display:flex;align-items:center;gap:10px;">
-          <select class="status-badge status-${d.Status}" onchange="updateStatus('${d.PID}', this)" onclick="event.stopPropagation();">
+          <select class="status-badge status-${escHtml(d.Status)}" onchange="updateStatus('${escAttr(d.PID)}', this)" onclick="event.stopPropagation();">
             <option value="見積中" ${d.Status === '見積中' ? 'selected' : ''}>見積中</option>
             <option value="製作中" ${d.Status === '製作中' ? 'selected' : ''}>製作中</option>
             <option value="運送中" ${d.Status === '運送中' ? 'selected' : ''}>運送中</option>
@@ -1163,18 +1188,18 @@ function renderList(data) {
       </div>
       <div class="project-card-body">
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;font-size:0.85em;">
-          <div><strong>PID:</strong> ${d.PID}</div>
+          <div><strong>PID:</strong> ${escHtml(d.PID)}</div>
           <div><strong>顧客:</strong> ${escHtml(d.CustomerName)}</div>
           <div><strong>納期:</strong> <span class="${dl.cls}">${deadlineDisplay}</span></div>
         </div>
         <div class="address-display" style="margin-bottom:12px;">
           ${renderAddressLine('納品先JP', addrJP)}
           ${renderAddressLine('納品先EN', addrEN)}
-          ${(addrJP || addrEN) ? `<button class="btn-copy-both" onclick="event.stopPropagation();copyBothValues('${escapedJP.replace(/'/g, "\\'")}','${escapedEN.replace(/'/g, "\\'")}')" style="margin-top:6px;font-size:0.8em;">📋 住所を両方コピー（JP＋EN）</button>` : ''}
+          ${(addrJP || addrEN) ? `<button class="btn-copy-both" onclick="event.stopPropagation();copyBothValues('${escAttr(addrJP)}','${escAttr(addrEN)}')" style="margin-top:6px;font-size:0.8em;">📋 住所を両方コピー（JP＋EN）</button>` : ''}
         </div>
         <table class="detail-view-table">
           <thead><tr><th>カテゴリ</th><th>タグ</th><th>商品名</th><th>数量</th><th>原価</th><th>単価</th><th>小計原価</th><th>小計売価</th><th>備考</th></tr></thead>
-          <tbody>${d.products.map(p => `<tr><td>${p.Category || ''}</td><td>${p.Tag || ''}</td><td>${p.ProductName || ''}</td><td>${p.Qty}</td><td>${fmt(p.CostB)}</td><td>${fmt(p.Price)}</td><td>${fmt(p.SubtotalB)}</td><td>${fmt(p.SubtotalPrice)}</td><td>${p.Memo || ''}</td></tr>`).join('')}</tbody>
+          <tbody>${d.products.map(p => `<tr><td>${escHtml(p.Category || '')}</td><td>${escHtml(p.Tag || '')}</td><td>${escHtml(p.ProductName || '')}</td><td>${p.Qty}</td><td>${fmt(p.CostB)}</td><td>${fmt(p.Price)}</td><td>${fmt(p.SubtotalB)}</td><td>${fmt(p.SubtotalPrice)}</td><td>${escHtml(p.Memo || '')}</td></tr>`).join('')}</tbody>
         </table>
         <div class="summary-box">
           <div class="summary-item"><div class="s-label">原価合計</div><div class="s-value">${fmt(d.totalCostB)}</div></div>
@@ -1183,8 +1208,8 @@ function renderList(data) {
           <div class="summary-item" style="grid-column: span 3;">
             <div class="s-label">操作</div>
             <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:4px;">
-              <button class="btn btn-warning btn-sm" onclick="openEditModal('${d.PID}')">✏️ 編集</button>
-              <button class="btn btn-danger btn-sm" onclick="deleteProject('${d.PID}')">🗑️ 削除</button>
+              <button class="btn btn-warning btn-sm" onclick="openEditModal('${escAttr(d.PID)}')">✏️ 編集</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteProject('${escAttr(d.PID)}')">🗑️ 削除</button>
             </div>
           </div>
         </div>
@@ -1209,7 +1234,7 @@ function openEditModal(pid) {
   const currentAddrEN = d.DeliveryAddressEN || '';
 
   const custOptions = customersCache.map(c =>
-    `<option value="${c.CID}" ${c.CID === d.CID ? 'selected' : ''}>${c.CustomerName}</option>`
+    `<option value="${escHtml(c.CID)}" ${c.CID === d.CID ? 'selected' : ''}>${escHtml(c.CustomerName)}</option>`
   ).join('');
 
   let html = `
@@ -1218,7 +1243,7 @@ function openEditModal(pid) {
       <div class="form-row">
         <div class="form-group">
           <label>PID</label>
-          <input type="text" value="${pid}" readonly style="background:#f0f0f0;">
+          <input type="text" value="${escHtml(pid)}" readonly style="background:#f0f0f0;">
         </div>
         <div class="form-group">
           <label>案件名 *</label>
@@ -1311,12 +1336,12 @@ function addEditDetailRow(data) {
   const memo = (data && data.Memo) || '';
 
   const cats = [...new Set(masterCache.map(m => m.CategoryName))];
-  const catOpts = '<option value="">-- カテゴリ --</option>' + cats.map(c => `<option ${c === cat ? 'selected' : ''}>${c}</option>`).join('');
+  const catOpts = '<option value="">-- カテゴリ --</option>' + cats.map(c => `<option ${c === cat ? 'selected' : ''}>${escHtml(c)}</option>`).join('');
 
   let tagOpts = '<option value="">-- タグ --</option>';
   if (cat) {
     const tags = masterCache.filter(m => m.CategoryName === cat && m.TagName);
-    tagOpts = '<option value="">-- タグ --</option>' + tags.map(t => `<option ${t.TagName === tag ? 'selected' : ''}>${t.TagName}</option>`).join('');
+    tagOpts = '<option value="">-- タグ --</option>' + tags.map(t => `<option ${t.TagName === tag ? 'selected' : ''}>${escHtml(t.TagName)}</option>`).join('');
   }
 
   item.innerHTML = `
@@ -1412,8 +1437,8 @@ async function saveEditProject() {
       Category: item.querySelector('.d-category').value,
       Tag: item.querySelector('.d-tag').value,
       ProductName: item.querySelector('.d-name').value.trim(),
-      Qty: qty, CostA: 0, CostB: costB, Price: price,
-      SubtotalA: 0, SubtotalB: qty * costB, SubtotalPrice: qty * price,
+      Qty: qty, CostA: '', CostB: costB, Price: price,
+      SubtotalA: '', SubtotalB: qty * costB, SubtotalPrice: qty * price,
       Memo: item.querySelector('.d-memo').value.trim()
     });
   });
