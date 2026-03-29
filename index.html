@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>データベース</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; color: #333; }
@@ -25,7 +26,7 @@
   .form-group input:focus, .form-group select:focus { border-color: #c0392b; outline: none; box-shadow: 0 0 0 3px rgba(192,57,43,0.1); }
   .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
-  .form-row-4 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .form-row-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; }
 
   .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.9em; font-weight: 600; transition: all 0.3s; }
   .btn-primary { background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; }
@@ -40,7 +41,6 @@
   .btn-sm { padding: 6px 12px; font-size: 0.8em; }
   .btn-group { display: flex; gap: 8px; margin-top: 10px; }
 
-  .table-container { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; }
   th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #eee; font-size: 0.85em; }
   th { background: #f8f9fa; font-weight: 600; color: #555; position: sticky; top: 0; }
@@ -74,10 +74,9 @@
   .tag-stat-card .ts-value { font-size: 1.15em; font-weight: 700; color: #c0392b; }
   .tag-stat-card.wide { grid-column: span 3; }
 
-  .product-item { background: #fff5f5; border: 1px solid #f0d0d0; border-radius: 10px; padding: 16px; margin-bottom: 12px; position: relative; }
+  .product-item { background: #fff5f5; border: 1px solid #f0d0d0; border-radius: 10px; padding: 16px; margin-bottom: 12px; }
   .product-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
   .product-item-num { font-weight: 700; color: #c0392b; font-size: 0.9em; }
-  .product-item .form-row, .product-item .form-row-3, .product-item .form-row-4 { margin-bottom: 8px; }
   .product-subtotals { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; padding: 10px; background: #fce4e4; border-radius: 8px; }
   .product-subtotals .sub-item { text-align: center; }
   .product-subtotals .sub-label { font-size: 0.72em; color: #777; }
@@ -119,23 +118,17 @@
   .deadline-near { color: #e74c3c; font-weight: 700; }
   .deadline-soon { color: #e67e22; font-weight: 600; }
   .deadline-ok { color: #27ae60; }
-
   .loading { text-align: center; padding: 40px; color: #999; }
 
   .edit-modal-section { background: #fff5f5; border: 1px solid #f0d0d0; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
   .edit-modal-section h4 { font-size: 0.95em; color: #c0392b; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #c0392b; }
 
-  .address-display { font-size: 0.85em; color: #555; padding: 4px 0; }
-  .address-display .addr-icon { margin-right: 4px; }
-
   .addr-field-wrap { display: flex; gap: 6px; align-items: center; }
   .addr-field-wrap input { flex: 1; }
   .btn-copy { background: #c0392b; color: white; border: none; border-radius: 6px; padding: 8px 10px; cursor: pointer; font-size: 0.85em; white-space: nowrap; transition: all 0.2s; }
   .btn-copy:hover { background: #a93226; transform: scale(1.05); }
-  .btn-copy:active { transform: scale(0.95); }
   .btn-copy-both { background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; border: none; border-radius: 6px; padding: 8px 14px; cursor: pointer; font-size: 0.85em; white-space: nowrap; transition: all 0.2s; font-weight: 600; }
   .btn-copy-both:hover { transform: scale(1.05); box-shadow: 0 2px 8px rgba(192,57,43,0.4); }
-  .btn-copy-both:active { transform: scale(0.95); }
 
   .addr-line { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
   .addr-line .addr-text { flex: 1; word-break: break-all; }
@@ -168,6 +161,63 @@
   .cust-related-item .cri-price { font-weight: 700; font-size: 0.9em; }
   .cust-related-item .cri-arrow { color: #c0392b; font-size: 1.1em; }
 
+  /* Master */
+  .master-cat-block { background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:16px; margin-bottom:12px; box-shadow:0 1px 3px rgba(0,0,0,0.06); transition:box-shadow 0.2s; }
+  .master-cat-block:hover { box-shadow:0 4px 12px rgba(0,0,0,0.1); }
+  .master-cat-header { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+  .sort-btn-group { display:flex; flex-direction:column; gap:2px; }
+  .sort-btn { width:28px; height:22px; border:1px solid #cbd5e1; background:#f8fafc; color:#475569; font-size:10px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s; padding:0; }
+  .sort-btn-up { border-radius:6px 6px 2px 2px; }
+  .sort-btn-down { border-radius:2px 2px 6px 6px; }
+  .sort-btn:hover:not(:disabled) { background:#c0392b; color:#fff; border-color:#c0392b; transform:scale(1.1); }
+  .sort-btn:active:not(:disabled) { transform:scale(0.95); }
+  .sort-btn:disabled { opacity:0.25; cursor:not-allowed; }
+  .master-cat-name { font-size:1.1rem; font-weight:700; flex-grow:1; }
+  .master-cat-del { width:32px; height:32px; border:1px solid #fecaca; background:#fef2f2; border-radius:8px; cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center; transition:all 0.15s; padding:0; }
+  .master-cat-del:hover { background:#ef4444; border-color:#ef4444; transform:scale(1.1); filter:grayscale(1) brightness(10); }
+  .master-tag-list { display:flex; flex-wrap:wrap; gap:8px; padding-left:40px; }
+  .master-tag-chip { display:inline-flex; align-items:center; gap:6px; background:#f1f5f9; border:1px solid #e2e8f0; border-radius:20px; padding:6px 10px 6px 14px; font-size:0.85rem; color:#334155; cursor:pointer; transition:all 0.15s; }
+  .master-tag-chip:hover { background:#fce4e4; border-color:#f5a0a0; transform:translateY(-1px); }
+  .master-tag-count { background:#c0392b; color:#fff; font-size:0.7rem; font-weight:700; min-width:20px; height:20px; border-radius:10px; display:inline-flex; align-items:center; justify-content:center; padding:0 5px; }
+  .master-tag-del { background:none; border:none; color:#94a3b8; font-size:16px; font-weight:700; cursor:pointer; padding:0; line-height:1; width:20px; height:20px; display:flex; align-items:center; justify-content:center; border-radius:50%; transition:all 0.15s; }
+  .master-tag-del:hover { background:#ef4444; color:#fff; }
+
+  /* Phase4: 商品並び替えボタン */
+  .item-sort-btn-group { display:flex; flex-direction:column; gap:1px; margin-right:8px; }
+  .item-sort-btn { width:26px; height:20px; border:1px solid #cbd5e1; background:#f8fafc; color:#475569; font-size:9px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s; padding:0; }
+  .item-sort-btn:first-child { border-radius:5px 5px 1px 1px; }
+  .item-sort-btn:last-child { border-radius:1px 1px 5px 5px; }
+  .item-sort-btn:hover:not(:disabled) { background:#c0392b; color:#fff; border-color:#c0392b; transform:scale(1.1); }
+  .item-sort-btn:active:not(:disabled) { transform:scale(0.95); }
+  .item-sort-btn:disabled { opacity:0.25; cursor:not-allowed; }
+  .product-item.swap-up { animation:swapUp 0.3s ease; }
+  .product-item.swap-down { animation:swapDown 0.3s ease; }
+  @keyframes swapUp { 0%{transform:translateY(20px);opacity:0.5;} 100%{transform:translateY(0);opacity:1;} }
+  @keyframes swapDown { 0%{transform:translateY(-20px);opacity:0.5;} 100%{transform:translateY(0);opacity:1;} }
+
+  /* Phase5: クローンモーダル */
+  .clone-toggle-row { display:flex; align-items:center; gap:12px; padding:10px 14px; background:#fff5f5; border:1px solid #f0d0d0; border-radius:8px; margin-bottom:8px; cursor:pointer; }
+  .clone-toggle-row input[type="checkbox"] { width:18px; height:18px; accent-color:#c0392b; cursor:pointer; flex-shrink:0; }
+  .clone-toggle-row span { font-size:0.92em; cursor:pointer; }
+
+  /* Phase6: ダッシュボード */
+  .kpi-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+  .kpi-card { background:white; border-radius:10px; padding:16px; text-align:center; box-shadow:0 2px 6px rgba(0,0,0,0.06); border-top:3px solid #c0392b; }
+  .kpi-card .kpi-label { font-size:0.75em; color:#777; margin-bottom:6px; }
+  .kpi-card .kpi-value { font-size:1.3em; font-weight:700; color:#333; }
+  .dash-two-col { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .deadline-row { display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:white; border-radius:8px; margin-bottom:6px; box-shadow:0 1px 3px rgba(0,0,0,0.05); cursor:pointer; transition:all 0.2s; }
+  .deadline-row:hover { background:#fff5f5; transform:translateX(4px); }
+  .cal-table { width:100%; border-collapse:separate; border-spacing:2px; }
+  .cal-table th { text-align:center; padding:5px; font-size:0.78em; font-weight:600; color:#555; }
+  .cal-table td { vertical-align:top; border:1px solid #eee; border-radius:4px; min-height:44px; padding:2px; background:white; }
+  .cal-day-num { font-size:0.78em; text-align:right; padding:1px 3px; color:#555; }
+  .cal-event { font-size:0.65em; background:#f39c12; color:white; border-radius:3px; padding:1px 4px; margin-top:2px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; cursor:pointer; display:block; }
+  .cal-today { background:#c0392b !important; border-color:#c0392b !important; }
+  .cal-today .cal-day-num { color:white; font-weight:700; }
+  .cal-sun .cal-day-num { color:#e74c3c; }
+  .cal-sat .cal-day-num { color:#3498db; }
+
   @media (max-width: 768px) {
     .form-row, .form-row-3, .form-row-4 { grid-template-columns: 1fr; }
     .totals-grid { grid-template-columns: 1fr 1fr; }
@@ -179,149 +229,84 @@
     .tag-stat-card.wide { grid-column: span 1; }
     .modal-content.modal-lg { width: 98%; max-width: 98%; padding: 14px; }
     .cust-detail-grid { grid-template-columns: 1fr; }
+    .master-tag-list { padding-left: 0; }
+    .kpi-grid { grid-template-columns: 1fr 1fr; }
+    .dash-two-col { grid-template-columns: 1fr; }
   }
 </style>
 </head>
 <body>
 
 <div class="header">
-<h1 style="margin:0;font-size:1.3rem;">データベース</h1>
+  <h1 style="margin:0;font-size:1.3rem;">データベース</h1>
   <div class="nav-buttons">
-    <button class="nav-btn active" onclick="showPage('register')">📝 登録</button>
+    <button class="nav-btn" onclick="showPage('register')">📝 登録</button>
     <button class="nav-btn" onclick="showPage('list')">📋 一覧</button>
     <button class="nav-btn" onclick="showPage('customer')">👥 顧客</button>
     <button class="nav-btn" onclick="showPage('master')">🏷️ マスタ</button>
+    <button class="nav-btn active" onclick="showPage('dashboard')">📊 ダッシュボード</button>
   </div>
 </div>
 
-<!-- ============ REGISTER PAGE ============ -->
-<div id="page-register" class="page active">
+<!-- REGISTER PAGE -->
+<div id="page-register" class="page">
   <div class="card">
     <h2>📝 案件情報</h2>
     <div class="form-row">
-      <div class="form-group">
-        <label>PID（自動採番）</label>
-        <input type="text" id="reg-pid" readonly style="background:#f0f0f0;">
-      </div>
-      <div class="form-group">
-        <label>案件名 *</label>
-        <input type="text" id="reg-project-name" placeholder="案件名を入力">
-      </div>
+      <div class="form-group" style="display:none;"><label>PID</label><input type="text" id="reg-pid" readonly style="background:#f0f0f0;"></div>
+      <div class="form-group"><label>案件名 *</label><input type="text" id="reg-project-name" placeholder="案件名を入力"></div>
     </div>
-    <div class="form-group">
-      <label>顧客 *</label>
-      <select id="reg-customer" onchange="onRegCustomerChange()"></select>
-    </div>
-    <div class="form-group">
-      <label>📍 納品先住所（日本語）</label>
-      <div class="addr-field-wrap">
-        <input type="text" id="reg-address-jp" placeholder="顧客選択で自動入力（手動変更可）">
-        <button class="btn-copy" onclick="copyText('reg-address-jp')" title="日本語住所をコピー">📋</button>
-      </div>
-    </div>
-    <div class="form-group">
-      <label>📍 納品先住所（英語）</label>
-      <div class="addr-field-wrap">
-        <input type="text" id="reg-address-en" placeholder="Auto-filled on customer select (editable)">
-        <button class="btn-copy" onclick="copyText('reg-address-en')" title="英語住所をコピー">📋</button>
-      </div>
-    </div>
-    <div class="form-group">
-      <button class="btn-copy-both" onclick="copyBothAddresses('reg-address-jp','reg-address-en')" title="日本語＋英語住所を両方コピー">📋 住所を両方コピー（JP＋EN）</button>
-    </div>
+    <div class="form-group"><label>顧客 *</label><select id="reg-customer" onchange="onRegCustomerChange()"></select></div>
+    <div class="form-group"><label>📍 納品先住所（日本語）</label><div class="addr-field-wrap"><input type="text" id="reg-address-jp" placeholder="顧客選択で自動入力"><button class="btn-copy" onclick="copyText('reg-address-jp')">📋</button></div></div>
+    <div class="form-group"><label>📍 納品先住所（英語）</label><div class="addr-field-wrap"><input type="text" id="reg-address-en" placeholder="Auto-filled on customer select"><button class="btn-copy" onclick="copyText('reg-address-en')">📋</button></div></div>
+    <div class="form-group"><button class="btn-copy-both" onclick="copyBothAddresses('reg-address-jp','reg-address-en')">📋 住所を両方コピー（JP＋EN）</button></div>
     <div class="form-row">
-      <div class="form-group">
-        <label>ステータス</label>
-        <select id="reg-status">
-          <option value="見積中">見積中</option>
-          <option value="製作中">製作中</option>
-          <option value="運送中">運送中</option>
-          <option value="完了">完了</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>納期</label>
-        <input type="date" id="reg-deadline">
-      </div>
+      <div class="form-group"><label>ステータス</label><select id="reg-status"><option value="見積中">見積中</option><option value="製作中">製作中</option><option value="運送中">運送中</option><option value="完了">完了</option></select></div>
+      <div class="form-group"><label>納期</label><input type="date" id="reg-deadline"></div>
     </div>
   </div>
-
   <div class="card">
     <h2>📦 商品明細</h2>
     <div id="detail-rows"></div>
     <button class="btn btn-secondary btn-sm" onclick="addDetailRow()" style="margin-top:8px;">＋ 商品を追加</button>
-
     <div class="totals-grid" id="totals-area">
       <div class="total-card"><div class="t-label">原価合計</div><div class="t-value" id="total-costB">¥0</div></div>
       <div class="total-card"><div class="t-label">売価合計</div><div class="t-value" id="total-price">¥0</div></div>
       <div class="total-card"><div class="t-label">粗利（率）</div><div class="t-value" id="total-profitB">¥0</div></div>
     </div>
   </div>
-
   <div class="btn-group">
     <button class="btn btn-primary" onclick="saveProject()">💾 保存</button>
     <button class="btn btn-secondary" onclick="resetRegister()">🔄 リセット</button>
   </div>
 </div>
 
-<!-- ============ LIST PAGE ============ -->
+<!-- LIST PAGE -->
 <div id="page-list" class="page">
   <div class="card">
     <h2>📋 案件一覧</h2>
     <div class="search-bar">
       <input type="text" id="search-input" placeholder="🔍 PID・案件名・顧客名で検索..." oninput="filterList()">
-      <select id="filter-status" onchange="filterList()">
-        <option value="">全ステータス</option>
-        <option value="見積中">見積中</option>
-        <option value="製作中">製作中</option>
-        <option value="運送中">運送中</option>
-        <option value="完了">完了</option>
-      </select>
+      <select id="filter-status" onchange="filterList()"><option value="">全ステータス</option><option value="見積中">見積中</option><option value="製作中">製作中</option><option value="運送中">運送中</option><option value="完了">完了</option></select>
       <span class="result-count" id="result-count"></span>
     </div>
     <div id="project-list"><div class="loading">読み込み中...</div></div>
   </div>
 </div>
 
-<!-- ============ CUSTOMER PAGE ============ -->
+<!-- CUSTOMER PAGE -->
 <div id="page-customer" class="page">
   <div class="card">
     <h2>👥 顧客登録</h2>
     <div class="form-row">
-      <div class="form-group">
-        <label>CID（自動採番）</label>
-        <input type="text" id="cust-cid" readonly style="background:#f0f0f0;">
-      </div>
-      <div class="form-group">
-        <label>顧客名</label>
-        <input type="text" id="cust-name" placeholder="顧客名">
-      </div>
+      <div class="form-group" style="display:none;"><label>CID</label><input type="text" id="cust-cid" readonly style="background:#f0f0f0;"></div>
+      <div class="form-group"><label>顧客名</label><input type="text" id="cust-name" placeholder="顧客名"></div>
     </div>
-    <div class="form-group">
-      <label>担当者</label>
-      <input type="text" id="cust-contact" placeholder="担当者名">
-    </div>
-    <div class="form-group">
-      <label>📍 住所（日本語）</label>
-      <div class="addr-field-wrap">
-        <input type="text" id="cust-address-jp" placeholder="日本語住所">
-        <button class="btn-copy" onclick="copyText('cust-address-jp')" title="日本語住所をコピー">📋</button>
-      </div>
-    </div>
-    <div class="form-group">
-      <label>📍 住所（英語）</label>
-      <div class="addr-field-wrap">
-        <input type="text" id="cust-address-en" placeholder="English Address">
-        <button class="btn-copy" onclick="copyText('cust-address-en')" title="英語住所をコピー">📋</button>
-      </div>
-    </div>
-    <div class="form-group">
-      <button class="btn-copy-both" onclick="copyBothAddresses('cust-address-jp','cust-address-en')" title="日本語＋英語住所を両方コピー">📋 住所を両方コピー（JP＋EN）</button>
-    </div>
-    <div class="form-group">
-      <label>メモ</label>
-      <input type="text" id="cust-memo" placeholder="メモ">
-    </div>
+    <div class="form-group"><label>担当者</label><input type="text" id="cust-contact" placeholder="担当者名"></div>
+    <div class="form-group"><label>📍 住所（日本語）</label><div class="addr-field-wrap"><input type="text" id="cust-address-jp" placeholder="日本語住所"><button class="btn-copy" onclick="copyText('cust-address-jp')">📋</button></div></div>
+    <div class="form-group"><label>📍 住所（英語）</label><div class="addr-field-wrap"><input type="text" id="cust-address-en" placeholder="English Address"><button class="btn-copy" onclick="copyText('cust-address-en')">📋</button></div></div>
+    <div class="form-group"><button class="btn-copy-both" onclick="copyBothAddresses('cust-address-jp','cust-address-en')">📋 住所を両方コピー（JP＋EN）</button></div>
+    <div class="form-group"><label>メモ</label><input type="text" id="cust-memo" placeholder="メモ"></div>
     <div class="btn-group">
       <button class="btn btn-primary" onclick="saveCustomer()">💾 保存</button>
       <button class="btn btn-secondary" onclick="resetCustomerForm()">🔄 リセット</button>
@@ -337,54 +322,64 @@
   </div>
 </div>
 
-<!-- ============ MASTER PAGE ============ -->
+<!-- MASTER PAGE -->
 <div id="page-master" class="page">
   <div class="card">
     <h2>🏷️ カテゴリ登録</h2>
     <div class="form-row">
-      <div class="form-group">
-        <label>カテゴリ名</label>
-        <input type="text" id="master-cat" placeholder="新しいカテゴリ名">
-      </div>
-      <div class="form-group" style="display:flex;align-items:flex-end;">
-        <button class="btn btn-primary" onclick="saveCategory()">➕ 追加</button>
-      </div>
+      <div class="form-group"><label>カテゴリ名</label><input type="text" id="master-cat" placeholder="新しいカテゴリ名"></div>
+      <div class="form-group" style="display:flex;align-items:flex-end;"><button class="btn btn-primary" onclick="saveCategory()">➕ 追加</button></div>
     </div>
   </div>
   <div class="card">
     <h2>🏷️ タグ登録</h2>
     <div class="form-row-3">
-      <div class="form-group">
-        <label>カテゴリ</label>
-        <select id="master-tag-cat"></select>
-      </div>
-      <div class="form-group">
-        <label>タグ名</label>
-        <input type="text" id="master-tag" placeholder="新しいタグ名">
-      </div>
-      <div class="form-group" style="display:flex;align-items:flex-end;">
-        <button class="btn btn-primary" onclick="saveTag()">➕ 追加</button>
-      </div>
+      <div class="form-group"><label>カテゴリ</label><select id="master-tag-cat"></select></div>
+      <div class="form-group"><label>タグ名</label><input type="text" id="master-tag" placeholder="新しいタグ名"></div>
+      <div class="form-group" style="display:flex;align-items:flex-end;"><button class="btn btn-primary" onclick="saveTag()">➕ 追加</button></div>
+    </div>
+  </div>
+  <div class="card"><h2>一覧</h2><div id="master-list"></div></div>
+</div>
+
+<!-- DASHBOARD PAGE -->
+<div id="page-dashboard" class="page active">
+  <div class="card">
+    <h2>📊 KPI サマリー</h2>
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-label">総案件数</div><div class="kpi-value" id="kpi-projects">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">進行中案件</div><div class="kpi-value" id="kpi-active">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">顧客数</div><div class="kpi-value" id="kpi-customers">—</div></div>
+      <div class="kpi-card" style="border-top-color:#27ae60;"><div class="kpi-label">売上合計</div><div class="kpi-value" id="kpi-sales">—</div></div>
+      <div class="kpi-card" style="border-top-color:#27ae60;"><div class="kpi-label">粗利合計</div><div class="kpi-value" id="kpi-profit">—</div></div>
+      <div class="kpi-card" style="border-top-color:#27ae60;"><div class="kpi-label">粗利率</div><div class="kpi-value" id="kpi-margin">—</div></div>
+    </div>
+  </div>
+  <div class="dash-two-col">
+    <div class="card">
+      <h2>📅 納品カレンダー（今月）</h2>
+      <div id="delivery-calendar"><div class="loading">読み込み中...</div></div>
+    </div>
+    <div class="card">
+      <h2>⏰ 直近デッドライン</h2>
+      <div id="dash-deadlines"><div class="loading">読み込み中...</div></div>
     </div>
   </div>
   <div class="card">
-    <h2>一覧</h2>
-    <div id="master-list"></div>
+    <h2>📈 12ヶ月トレンド（登録日ベース）</h2>
+    <canvas id="trend-chart" height="100"></canvas>
   </div>
 </div>
 
-<!-- Tag Detail Modal -->
+<!-- MODALS -->
 <div class="modal-overlay" id="tag-modal">
   <div class="modal-content">
     <h3 id="tag-modal-title">タグ詳細</h3>
     <div id="tag-modal-body"></div>
-    <div class="btn-group" style="justify-content:flex-end;margin-top:15px;">
-      <button class="btn btn-secondary" onclick="closeTagModal()">閉じる</button>
-    </div>
+    <div class="btn-group" style="justify-content:flex-end;margin-top:15px;"><button class="btn btn-secondary" onclick="closeTagModal()">閉じる</button></div>
   </div>
 </div>
 
-<!-- Edit Project Modal (Large) -->
 <div class="modal-overlay" id="edit-modal">
   <div class="modal-content modal-lg">
     <h3>✏️ 案件編集 <span id="edit-modal-pid" style="font-size:0.8em;color:#999;"></span></h3>
@@ -396,39 +391,15 @@
   </div>
 </div>
 
-<!-- Customer Edit Modal -->
 <div class="modal-overlay" id="cust-edit-modal">
   <div class="modal-content">
     <h3>✏️ 顧客編集 <span id="cust-edit-modal-cid" style="font-size:0.8em;color:#999;"></span></h3>
-    <div class="form-group">
-      <label>顧客名 *</label>
-      <input type="text" id="cedit-name" placeholder="顧客名">
-    </div>
-    <div class="form-group">
-      <label>担当者</label>
-      <input type="text" id="cedit-contact" placeholder="担当者名">
-    </div>
-    <div class="form-group">
-      <label>📍 住所（日本語）</label>
-      <div class="addr-field-wrap">
-        <input type="text" id="cedit-address-jp" placeholder="日本語住所">
-        <button class="btn-copy" onclick="copyText('cedit-address-jp')" title="コピー">📋</button>
-      </div>
-    </div>
-    <div class="form-group">
-      <label>📍 住所（英語）</label>
-      <div class="addr-field-wrap">
-        <input type="text" id="cedit-address-en" placeholder="English Address">
-        <button class="btn-copy" onclick="copyText('cedit-address-en')" title="コピー">📋</button>
-      </div>
-    </div>
-    <div class="form-group">
-      <button class="btn-copy-both" onclick="copyBothAddresses('cedit-address-jp','cedit-address-en')">📋 住所を両方コピー（JP＋EN）</button>
-    </div>
-    <div class="form-group">
-      <label>メモ</label>
-      <input type="text" id="cedit-memo" placeholder="メモ">
-    </div>
+    <div class="form-group"><label>顧客名 *</label><input type="text" id="cedit-name"></div>
+    <div class="form-group"><label>担当者</label><input type="text" id="cedit-contact"></div>
+    <div class="form-group"><label>📍 住所（日本語）</label><div class="addr-field-wrap"><input type="text" id="cedit-address-jp"><button class="btn-copy" onclick="copyText('cedit-address-jp')">📋</button></div></div>
+    <div class="form-group"><label>📍 住所（英語）</label><div class="addr-field-wrap"><input type="text" id="cedit-address-en"><button class="btn-copy" onclick="copyText('cedit-address-en')">📋</button></div></div>
+    <div class="form-group"><button class="btn-copy-both" onclick="copyBothAddresses('cedit-address-jp','cedit-address-en')">📋 住所を両方コピー（JP＋EN）</button></div>
+    <div class="form-group"><label>メモ</label><input type="text" id="cedit-memo"></div>
     <div class="btn-group" style="justify-content:flex-end;margin-top:15px;">
       <button class="btn btn-primary" onclick="saveEditCustomer()">💾 保存</button>
       <button class="btn btn-secondary" onclick="closeCustEditModal()">キャンセル</button>
@@ -436,44 +407,41 @@
   </div>
 </div>
 
+<!-- CLONE MODAL -->
+<div class="modal-overlay" id="clone-modal">
+  <div class="modal-content">
+    <h3>📋 案件を複製</h3>
+    <div style="margin-bottom:14px;padding:10px 14px;background:#fff5f5;border-radius:8px;font-size:0.9em;display:flex;gap:24px;">
+      <div>元PID: <strong id="clone-src-pid"></strong></div>
+      <div>新PID: <strong id="clone-new-pid" style="color:#c0392b;"></strong></div>
+    </div>
+    <label class="clone-toggle-row"><input type="checkbox" id="clone-copy-address" checked><span>📍 住所をコピーする</span></label>
+    <label class="clone-toggle-row"><input type="checkbox" id="clone-copy-items" checked><span>📦 商品アイテムをコピーする</span></label>
+    <label class="clone-toggle-row"><input type="checkbox" id="clone-copy-price" checked><span>💰 価格をコピーする（商品コピー時のみ有効）</span></label>
+    <div class="btn-group" style="justify-content:flex-end;margin-top:15px;">
+      <button class="btn btn-primary" onclick="executeClone()">📋 複製する</button>
+      <button class="btn btn-secondary" onclick="closeCloneModal()">キャンセル</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 <script>
 const API = 'https://sheetdb.io/api/v1/16f9oq61xmnqu';
-let customersCache = [];
-let allCustomersRaw = [];
-let masterCache = [];
-let productsCache = null;
-let pcCache = [];
-let allPcRaw = [];
-let editingPID = null;
-let editDetailCounter = 0;
-let editingCustCID = null;
+let customersCache = [], masterCache = [], productsCache = null, pcCache = [];
+let editingPID = null, editDetailCounter = 0, editingCustCID = null, detailCounter = 0;
+let listData = [];
 
-// Hidden CID/PID sets for filtering
-let hiddenCIDs = new Set();
-let hiddenPIDs = new Set();
-let dataLoaded = { customers: false, pc: false };
+/* Hidden フィルタ用セット */
+let hiddenCIDs = new Set(), hiddenPIDs = new Set();
 
-function buildHiddenSets() {
-  hiddenCIDs = new Set();
-  hiddenPIDs = new Set();
-  allCustomersRaw.forEach(c => {
-    if ((c.Hidden || '').toString().toLowerCase() === 'true') hiddenCIDs.add(c.CID);
-  });
-  allPcRaw.forEach(pc => {
-    if ((pc.Hidden || '').toString().toLowerCase() === 'true' || hiddenCIDs.has(pc.CID)) {
-      hiddenPIDs.add(pc.PID);
-    }
-  });
+function buildHiddenSets(allCusts, allPc) {
+  hiddenCIDs = new Set(); hiddenPIDs = new Set();
+  (allCusts||[]).forEach(c => { if((c.Hidden||'').toLowerCase()==='true') hiddenCIDs.add(c.CID); });
+  (allPc||[]).forEach(pc => { if((pc.Hidden||'').toLowerCase()==='true'||hiddenCIDs.has(pc.CID)) hiddenPIDs.add(pc.PID); });
 }
 
-function getVisibleCustomers() {
-  return allCustomersRaw.filter(c => !hiddenCIDs.has(c.CID));
-}
-
-function getVisiblePCs() {
-  return allPcRaw.filter(pc => !hiddenPIDs.has(pc.PID));
-}
+function todayISO(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 
 function showPage(page) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -484,1025 +452,597 @@ function showPage(page) {
   if (page === 'list') loadList();
   if (page === 'customer') loadCustomers();
   if (page === 'master') loadMaster();
+  if (page === 'dashboard') loadDashboard();
 }
 
-function toast(msg, type = 'success') {
+function toast(msg, type='success') {
   const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast toast-' + type + ' show';
+  t.textContent = msg; t.className = 'toast toast-' + type + ' show';
   setTimeout(() => t.classList.remove('show'), 3000);
 }
+function fmt(n) { return '¥' + Number(n||0).toLocaleString(); }
+function escHtml(s) { if(!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 
-function fmt(n) { return '¥' + Number(n || 0).toLocaleString(); }
-
-function copyText(inputId) {
-  const el = document.getElementById(inputId);
-  if (!el) return;
-  const val = el.value || el.textContent || '';
-  if (!val.trim()) { toast('コピーする内容がありません', 'error'); return; }
-  navigator.clipboard.writeText(val).then(() => toast('📋 コピーしました')).catch(() => {
-    const ta = document.createElement('textarea'); ta.value = val; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); toast('📋 コピーしました');
-  });
+function copyText(id) {
+  const el = document.getElementById(id); if(!el) return;
+  const v = el.value||el.textContent||'';
+  if(!v.trim()){toast('コピーする内容がありません','error');return;}
+  navigator.clipboard.writeText(v).then(()=>toast('📋 コピーしました')).catch(()=>{const ta=document.createElement('textarea');ta.value=v;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('📋 コピーしました');});
 }
-
 function copyValue(text) {
-  if (!text || !text.trim()) { toast('コピーする内容がありません', 'error'); return; }
-  navigator.clipboard.writeText(text).then(() => toast('📋 コピーしました')).catch(() => {
-    const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); toast('📋 コピーしました');
-  });
+  if(!text||!text.trim()){toast('コピーする内容がありません','error');return;}
+  navigator.clipboard.writeText(text).then(()=>toast('📋 コピーしました')).catch(()=>{const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('📋 コピーしました');});
 }
-
 function copyBothAddresses(jpId, enId) {
-  const jpEl = document.getElementById(jpId);
-  const enEl = document.getElementById(enId);
-  const jp = jpEl ? (jpEl.value || '').trim() : '';
-  const en = enEl ? (enEl.value || '').trim() : '';
-  if (!jp && !en) { toast('コピーする住所がありません', 'error'); return; }
-  let combined = '';
-  if (jp) combined += '【JP】' + jp;
-  if (jp && en) combined += '\n';
-  if (en) combined += '【EN】' + en;
-  navigator.clipboard.writeText(combined).then(() => toast('📋 JP＋EN 住所をコピーしました')).catch(() => {
-    const ta = document.createElement('textarea'); ta.value = combined; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); toast('📋 JP＋EN 住所をコピーしました');
-  });
+  const jp=(document.getElementById(jpId)?.value||'').trim(), en=(document.getElementById(enId)?.value||'').trim();
+  if(!jp&&!en){toast('コピーする住所がありません','error');return;}
+  let c=''; if(jp) c+='【JP】'+jp; if(jp&&en) c+='\n'; if(en) c+='【EN】'+en;
+  navigator.clipboard.writeText(c).then(()=>toast('📋 JP＋EN コピーしました')).catch(()=>{const ta=document.createElement('textarea');ta.value=c;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('📋 JP＋EN コピーしました');});
 }
-
 function copyBothValues(jp, en) {
-  jp = (jp || '').trim();
-  en = (en || '').trim();
-  if (!jp && !en) { toast('コピーする住所がありません', 'error'); return; }
-  let combined = '';
-  if (jp) combined += '【JP】' + jp;
-  if (jp && en) combined += '\n';
-  if (en) combined += '【EN】' + en;
-  navigator.clipboard.writeText(combined).then(() => toast('📋 JP＋EN 住所をコピーしました')).catch(() => {
-    const ta = document.createElement('textarea'); ta.value = combined; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); toast('📋 JP＋EN 住所をコピーしました');
-  });
+  jp=(jp||'').trim(); en=(en||'').trim();
+  if(!jp&&!en){toast('コピーする住所がありません','error');return;}
+  let c=''; if(jp) c+='【JP】'+jp; if(jp&&en) c+='\n'; if(en) c+='【EN】'+en;
+  navigator.clipboard.writeText(c).then(()=>toast('📋 JP＋EN コピーしました')).catch(()=>{const ta=document.createElement('textarea');ta.value=c;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('📋 JP＋EN コピーしました');});
 }
 
 function parseDeadline(val) {
-  if (!val) return null;
-  if (/^\d{4}[-/]\d{1,2}[-/]\d{1,2}$/.test(val)) {
-    const d = new Date(val.replace(/\//g, '-'));
-    if (!isNaN(d.getTime())) return d;
-  }
-  const num = Number(val);
-  if (!isNaN(num) && num > 10000 && num < 100000) {
-    const d = new Date((num - 25569) * 86400000);
-    if (!isNaN(d.getTime())) return d;
-  }
-  const d = new Date(val);
-  if (!isNaN(d.getTime())) return d;
-  return null;
+  if(!val) return null;
+  if(/^\d{4}[-/]\d{1,2}[-/]\d{1,2}$/.test(val)){const d=new Date(val.replace(/\//g,'-'));if(!isNaN(d.getTime()))return d;}
+  const num=Number(val); if(!isNaN(num)&&num>10000&&num<100000){const d=new Date((num-25569)*86400000);if(!isNaN(d.getTime()))return d;}
+  const d=new Date(val); if(!isNaN(d.getTime()))return d; return null;
 }
-
-function formatDate(val) {
-  const d = parseDeadline(val);
-  if (!d) return '';
-  return d.getFullYear() + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + String(d.getDate()).padStart(2, '0');
-}
-
-function formatDateISO(val) {
-  const d = parseDeadline(val);
-  if (!d) return '';
-  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-}
+function formatDate(val){const d=parseDeadline(val);if(!d)return '';return d.getFullYear()+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0');}
+function formatDateISO(val){const d=parseDeadline(val);if(!d)return '';return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 
 async function generateId(sheet, prefix, idCol) {
-  try {
-    const res = await fetch(API + '?sheet=' + sheet);
-    const data = await res.json();
-    if (!data || !Array.isArray(data) || data.length === 0) return prefix + '001';
-    const nums = data.map(r => parseInt((r[idCol] || '').replace(prefix, '')) || 0);
-    return prefix + String(Math.max(...nums) + 1).padStart(3, '0');
-  } catch (e) { return prefix + '001'; }
+  try { const res=await fetch(API+'?sheet='+sheet); const data=await res.json();
+    if(!data||!data.length)return prefix+'001';
+    const nums=data.map(r=>parseInt((r[idCol]||'').replace(prefix,''))||0);
+    return prefix+String(Math.max(...nums)+1).padStart(3,'0');
+  } catch(e){return prefix+'001';}
 }
 
-function getCustomerAddressJP(cid) {
-  const c = customersCache.find(x => x.CID === cid);
-  return (c && c.AddressJP) ? c.AddressJP : '';
-}
-function getCustomerAddressEN(cid) {
-  const c = customersCache.find(x => x.CID === cid);
-  return (c && c.AddressEN) ? c.AddressEN : '';
-}
+function getCustomerAddressJP(cid){const c=customersCache.find(x=>x.CID===cid);return c?.AddressJP||'';}
+function getCustomerAddressEN(cid){const c=customersCache.find(x=>x.CID===cid);return c?.AddressEN||'';}
 
-function escHtml(s) {
-  if (!s) return '';
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-}
-
-// Safe string for use inside onclick attributes (escape backslash, single quote)
-function escAttr(s) {
-  if (!s) return '';
-  return s.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n');
-}
-
-// ============================================================
-// CUSTOMER
-// ============================================================
+/* ========== CUSTOMER ========== */
 async function loadCustomers() {
   try {
-    const [custRes, pcRes, prodRes] = await Promise.all([
-      fetch(API + '?sheet=Customers'),
-      fetch(API + '?sheet=ProjectCustomer'),
-      fetch(API + '?sheet=Products')
-    ]);
-    allCustomersRaw = await custRes.json();
-    if (!Array.isArray(allCustomersRaw)) allCustomersRaw = [];
-    allPcRaw = await pcRes.json();
-    if (!Array.isArray(allPcRaw)) allPcRaw = [];
-    const prodData = await prodRes.json();
-    productsCache = Array.isArray(prodData) ? prodData : [];
-    dataLoaded.customers = true;
-    dataLoaded.pc = true;
-    buildHiddenSets();
-    customersCache = getVisibleCustomers();
-    pcCache = getVisiblePCs();
+    const [cr,pr,pdr]=await Promise.all([fetch(API+'?sheet=Customers'),fetch(API+'?sheet=ProjectCustomer'),fetch(API+'?sheet=Products')]);
+    const allCusts=await cr.json(), allPc=await pr.json();
+    if(!productsCache) productsCache=await pdr.json();
+    buildHiddenSets(allCusts, allPc);
+    customersCache = allCusts.filter(c => !hiddenCIDs.has(c.CID));
+    pcCache = allPc.filter(pc => !hiddenPIDs.has(pc.PID));
     renderCustomerAccordion();
-    const newId = await generateId('Customers', 'C', 'CID');
-    document.getElementById('cust-cid').value = newId;
-  } catch (e) { toast('顧客読み込みエラー', 'error'); }
+    const nid=await generateId('Customers','C','CID'); document.getElementById('cust-cid').value=nid;
+  } catch(e){toast('顧客読み込みエラー','error');}
 }
-
-function filterCustomerList() { renderCustomerAccordion(); }
+function filterCustomerList(){renderCustomerAccordion();}
 
 function renderCustomerAccordion() {
-  const query = (document.getElementById('cust-search-input')?.value || '').toLowerCase();
-  let filtered = customersCache;
-  if (query) {
-    filtered = filtered.filter(c =>
-      (c.CID || '').toLowerCase().includes(query) ||
-      (c.CustomerName || '').toLowerCase().includes(query) ||
-      (c.ContactPerson || '').toLowerCase().includes(query)
-    );
-  }
-  document.getElementById('cust-result-count').textContent = filtered.length + '件';
-  const container = document.getElementById('customer-list');
-  if (!filtered.length) {
-    container.innerHTML = '<p style="color:#999;text-align:center;padding:20px;">該当なし</p>';
-    return;
-  }
-
-  container.innerHTML = filtered.map(c => {
-    const relatedPCs = pcCache.filter(pc => pc.CID === c.CID);
-    const projectCount = relatedPCs.length;
-    const addrJP = c.AddressJP || '';
-    const addrEN = c.AddressEN || '';
-
-    let relatedHtml = '';
-    if (projectCount > 0) {
-      relatedHtml = `<div class="cust-related-projects"><h4>📋 関連案件（${projectCount}件）</h4>`;
-      relatedPCs.forEach(pc => {
-        const prods = (productsCache || []).filter(p => p.PID === pc.PID);
-        const pName = prods.length > 0 ? (prods[0].ProjectName || '不明') : '不明';
-        const totalPrice = prods.reduce((s, p) => s + Number(p.SubtotalPrice || 0), 0);
-        const statusClass = 'status-' + (pc.Status || '');
-        relatedHtml += `
-          <div class="cust-related-item" onclick="jumpToProject('${escAttr(pc.PID)}')">
-            <div class="cri-left">
-              <span class="cri-pid">${escHtml(pc.PID)}</span>
-              <span class="cri-name">${escHtml(pName)}</span>
-              <span class="status-badge ${statusClass}">${escHtml(pc.Status || '')}</span>
-            </div>
-            <div class="cri-right">
-              <span class="cri-price">${fmt(totalPrice)}</span>
-              <span class="cri-arrow">→</span>
-            </div>
-          </div>`;
+  const q=(document.getElementById('cust-search-input')?.value||'').toLowerCase();
+  let f=customersCache;
+  if(q) f=f.filter(c=>(c.CID||'').toLowerCase().includes(q)||(c.CustomerName||'').toLowerCase().includes(q)||(c.ContactPerson||'').toLowerCase().includes(q));
+  document.getElementById('cust-result-count').textContent=f.length+'件';
+  const ct=document.getElementById('customer-list');
+  if(!f.length){ct.innerHTML='<p style="color:#999;text-align:center;padding:20px;">該当なし</p>';return;}
+  ct.innerHTML=f.map(c=>{
+    const rpc=pcCache.filter(pc=>pc.CID===c.CID), cnt=rpc.length;
+    const aJ=c.AddressJP||'',aE=c.AddressEN||'',eJ=escHtml(aJ),eE=escHtml(aE);
+    let rel='';
+    if(cnt>0){
+      rel=`<div class="cust-related-projects"><h4>📋 関連案件（${cnt}件）</h4>`;
+      rpc.forEach(pc=>{
+        const prds=(productsCache||[]).filter(p=>p.PID===pc.PID);
+        const pN=prds.length?prds[0].ProjectName||'不明':'不明';
+        const tp=prds.reduce((s,p)=>s+Number(p.SubtotalPrice||0),0);
+        const sc='status-'+(pc.Status||'');
+        rel+=`<div class="cust-related-item" onclick="jumpToProject('${pc.PID}')"><div class="cri-left"><span class="cri-pid">${pc.PID}</span><span class="cri-name">${escHtml(pN)}</span><span class="status-badge ${sc}">${pc.Status||''}</span></div><div class="cri-right"><span class="cri-price">${fmt(tp)}</span><span class="cri-arrow">→</span></div></div>`;
       });
-      relatedHtml += '</div>';
+      rel+='</div>';
     } else {
-      relatedHtml = '<div class="cust-related-projects"><h4>📋 関連案件（0件）</h4><p style="color:#999;font-size:0.85em;">関連する案件はありません</p></div>';
+      rel='<div class="cust-related-projects"><h4>📋 関連案件（0件）</h4><p style="color:#999;font-size:0.85em;">なし</p></div>';
     }
-
-    return `
-    <div class="cust-card" id="cust-card-${escHtml(c.CID)}">
-      <div class="cust-card-header" onclick="toggleCustCard(this)">
-        <div class="left">
-          <span class="cid">${escHtml(c.CID)}</span>
-          <span class="cname">${escHtml(c.CustomerName)}</span>
-          <span class="ccontact">👤 ${escHtml(c.ContactPerson || '')}</span>
-        </div>
-        <div class="right">
-          <span class="project-count-badge">${projectCount}件</span>
-          <button class="btn btn-warning btn-sm" onclick="event.stopPropagation();openCustEditModal('${escAttr(c.CID)}')">✏️</button>
-          <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteCustomer('${escAttr(c.CID)}', ${projectCount})">🗑️</button>
-        </div>
-      </div>
-      <div class="cust-card-body">
-        <div class="cust-detail-grid">
-          <div class="cd-item"><div class="cd-label">顧客名</div><div class="cd-value">${escHtml(c.CustomerName)}</div></div>
-          <div class="cd-item"><div class="cd-label">担当者</div><div class="cd-value">${escHtml(c.ContactPerson || '—')}</div></div>
-          <div class="cd-item"><div class="cd-label">📍 住所（日本語）</div><div class="cd-value">${escHtml(addrJP) || '—'} ${addrJP ? `<button class="btn-copy-inline" onclick="event.stopPropagation();copyValue('${escAttr(addrJP)}')" title="JPコピー">📋</button>` : ''}</div></div>
-          <div class="cd-item"><div class="cd-label">📍 住所（英語）</div><div class="cd-value">${escHtml(addrEN) || '—'} ${addrEN ? `<button class="btn-copy-inline" onclick="event.stopPropagation();copyValue('${escAttr(addrEN)}')" title="ENコピー">📋</button>` : ''}</div></div>
-          <div class="cd-item" style="grid-column: span 2;"><div class="cd-label">メモ</div><div class="cd-value">${escHtml(c.Memo || '—')}</div></div>
-        </div>
-        ${(addrJP || addrEN) ? `<button class="btn-copy-both" onclick="event.stopPropagation();copyBothValues('${escAttr(addrJP)}','${escAttr(addrEN)}')" style="margin-bottom:12px;">📋 住所を両方コピー（JP＋EN）</button>` : ''}
-        ${relatedHtml}
-      </div>
-    </div>`;
+    return `<div class="cust-card" id="cust-card-${c.CID}"><div class="cust-card-header" onclick="toggleCustCard(this)"><div class="left"><span class="cid">${c.CID}</span><span class="cname">${escHtml(c.CustomerName)}</span><span class="ccontact">👤 ${escHtml(c.ContactPerson||'')}</span></div><div class="right"><span class="project-count-badge">${cnt}件</span><button class="btn btn-warning btn-sm" onclick="event.stopPropagation();openCustEditModal('${c.CID}')">✏️</button><button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteCustomer('${c.CID}',${cnt})">🗑️</button></div></div><div class="cust-card-body"><div class="cust-detail-grid"><div class="cd-item"><div class="cd-label">顧客名</div><div class="cd-value">${escHtml(c.CustomerName)}</div></div><div class="cd-item"><div class="cd-label">担当者</div><div class="cd-value">${escHtml(c.ContactPerson||'—')}</div></div><div class="cd-item"><div class="cd-label">📍 住所（JP）</div><div class="cd-value">${eJ||'—'} ${aJ?`<button class="btn-copy-inline" onclick="event.stopPropagation();copyValue('${eJ.replace(/'/g,"\\'")}')">📋</button>`:''}</div></div><div class="cd-item"><div class="cd-label">📍 住所（EN）</div><div class="cd-value">${eE||'—'} ${aE?`<button class="btn-copy-inline" onclick="event.stopPropagation();copyValue('${eE.replace(/'/g,"\\'")}')">📋</button>`:''}</div></div><div class="cd-item" style="grid-column:span 2;"><div class="cd-label">メモ</div><div class="cd-value">${escHtml(c.Memo||'—')}</div></div></div>${(aJ||aE)?`<button class="btn-copy-both" onclick="event.stopPropagation();copyBothValues('${eJ.replace(/'/g,"\\'")}','${eE.replace(/'/g,"\\'")}')" style="margin-bottom:12px;">📋 住所を両方コピー</button>`:''} ${rel}</div></div>`;
   }).join('');
 }
 
-function toggleCustCard(header) { header.nextElementSibling.classList.toggle('open'); }
+function toggleCustCard(h){h.nextElementSibling.classList.toggle('open');}
 
-function jumpToProject(pid) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+function jumpToProject(pid){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-list').classList.add('active');
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b => { if (b.textContent.includes('一覧')) b.classList.add('active'); });
-  loadList().then(() => {
-    setTimeout(() => {
-      const card = document.getElementById('card-' + pid);
-      if (card) {
-        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        const body = card.querySelector('.project-card-body');
-        if (body && !body.classList.contains('open')) body.classList.add('open');
-        card.style.boxShadow = '0 0 0 3px #c0392b';
-        setTimeout(() => { card.style.boxShadow = ''; }, 3000);
-      }
-    }, 500);
-  });
+  document.querySelectorAll('.nav-btn').forEach(b=>{b.classList.remove('active');if(b.textContent.includes('一覧'))b.classList.add('active');});
+  loadList().then(()=>{setTimeout(()=>{const card=document.getElementById('card-'+pid);if(card){card.scrollIntoView({behavior:'smooth',block:'center'});const body=card.querySelector('.project-card-body');if(body&&!body.classList.contains('open'))body.classList.add('open');card.style.boxShadow='0 0 0 3px #c0392b';setTimeout(()=>{card.style.boxShadow='';},3000);}},500);});
 }
 
-function openCustEditModal(cid) {
-  const c = customersCache.find(x => x.CID === cid);
-  if (!c) return;
-  editingCustCID = cid;
-  document.getElementById('cust-edit-modal-cid').textContent = cid;
-  document.getElementById('cedit-name').value = c.CustomerName || '';
-  document.getElementById('cedit-contact').value = c.ContactPerson || '';
-  document.getElementById('cedit-address-jp').value = c.AddressJP || '';
-  document.getElementById('cedit-address-en').value = c.AddressEN || '';
-  document.getElementById('cedit-memo').value = c.Memo || '';
+function openCustEditModal(cid){
+  const c=customersCache.find(x=>x.CID===cid);if(!c)return;editingCustCID=cid;
+  document.getElementById('cust-edit-modal-cid').textContent=cid;
+  document.getElementById('cedit-name').value=c.CustomerName||'';
+  document.getElementById('cedit-contact').value=c.ContactPerson||'';
+  document.getElementById('cedit-address-jp').value=c.AddressJP||'';
+  document.getElementById('cedit-address-en').value=c.AddressEN||'';
+  document.getElementById('cedit-memo').value=c.Memo||'';
   document.getElementById('cust-edit-modal').classList.add('active');
 }
+function closeCustEditModal(){document.getElementById('cust-edit-modal').classList.remove('active');editingCustCID=null;}
 
-function closeCustEditModal() {
-  document.getElementById('cust-edit-modal').classList.remove('active');
-  editingCustCID = null;
+async function saveEditCustomer(){
+  if(!editingCustCID)return;
+  const nm=document.getElementById('cedit-name').value.trim();
+  if(!nm){toast('顧客名を入力','error');return;}
+  const data={CustomerName:nm,ContactPerson:document.getElementById('cedit-contact').value.trim(),AddressJP:document.getElementById('cedit-address-jp').value.trim(),AddressEN:document.getElementById('cedit-address-en').value.trim(),Memo:document.getElementById('cedit-memo').value.trim()};
+  try{
+    toast('保存中...','info');
+    await fetch(API+'/CID/'+editingCustCID+'?sheet=Customers',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({data})});
+    toast('顧客を更新しました');closeCustEditModal();loadCustomers();
+  }catch(e){toast('更新エラー','error');}
 }
 
-async function saveEditCustomer() {
-  if (!editingCustCID) return;
-  const name = document.getElementById('cedit-name').value.trim();
-  if (!name) { toast('顧客名を入力してください', 'error'); return; }
-  const data = {
-    CustomerName: name,
-    ContactPerson: document.getElementById('cedit-contact').value.trim(),
-    AddressJP: document.getElementById('cedit-address-jp').value.trim(),
-    AddressEN: document.getElementById('cedit-address-en').value.trim(),
-    Memo: document.getElementById('cedit-memo').value.trim()
-  };
-  try {
-    await fetch(API + '/CID/' + editingCustCID + '?sheet=Customers', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ data })
-    });
-    toast('顧客を更新しました');
-    closeCustEditModal();
-    loadCustomers();
-  } catch (e) { toast('更新エラー', 'error'); }
+async function saveCustomer(){
+  const cid=document.getElementById('cust-cid').value,nm=document.getElementById('cust-name').value.trim();
+  if(!nm){toast('顧客名を入力','error');return;}
+  const data={CID:cid,CustomerName:nm,ContactPerson:document.getElementById('cust-contact').value.trim(),AddressJP:document.getElementById('cust-address-jp').value.trim(),AddressEN:document.getElementById('cust-address-en').value.trim(),Memo:document.getElementById('cust-memo').value.trim(),Hidden:''};
+  try{await fetch(API+'?sheet=Customers',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data})});toast('顧客を登録しました');resetCustomerForm();loadCustomers();}catch(e){toast('保存エラー','error');}
 }
+async function deleteCustomer(cid,cnt){let m=cid+' を削除？';if(cnt>0)m+='\n⚠️ '+cnt+'件の関連案件あり';if(!confirm(m))return;await fetch(API+'/CID/'+cid+'?sheet=Customers',{method:'DELETE'});toast('削除しました');loadCustomers();}
+function resetCustomerForm(){document.getElementById('cust-name').value='';document.getElementById('cust-contact').value='';document.getElementById('cust-address-jp').value='';document.getElementById('cust-address-en').value='';document.getElementById('cust-memo').value='';generateId('Customers','C','CID').then(id=>document.getElementById('cust-cid').value=id);}
 
-async function saveCustomer() {
-  const cid = document.getElementById('cust-cid').value;
-  const name = document.getElementById('cust-name').value.trim();
-  if (!name) { toast('顧客名を入力してください', 'error'); return; }
-  const data = {
-    CID: cid,
-    CustomerName: name,
-    ContactPerson: document.getElementById('cust-contact').value.trim(),
-    AddressJP: document.getElementById('cust-address-jp').value.trim(),
-    AddressEN: document.getElementById('cust-address-en').value.trim(),
-    Memo: document.getElementById('cust-memo').value.trim(),
-    Hidden: ''
-  };
-  try {
-    await fetch(API + '?sheet=Customers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data }) });
-    toast('顧客を登録しました');
-    resetCustomerForm(); loadCustomers();
-  } catch (e) { toast('保存エラー', 'error'); }
-}
-
-async function deleteCustomer(cid, projectCount) {
-  let msg = cid + ' を削除しますか？';
-  if (projectCount > 0) msg += '\n\n⚠️ この顧客には ' + projectCount + ' 件の関連案件があります。';
-  if (!confirm(msg)) return;
-  try {
-    await fetch(API + '/CID/' + cid + '?sheet=Customers', { method: 'DELETE' });
-    toast('削除しました'); loadCustomers();
-  } catch (e) { toast('削除エラー', 'error'); }
-}
-
-function resetCustomerForm() {
-  document.getElementById('cust-name').value = '';
-  document.getElementById('cust-contact').value = '';
-  document.getElementById('cust-address-jp').value = '';
-  document.getElementById('cust-address-en').value = '';
-  document.getElementById('cust-memo').value = '';
-  generateId('Customers', 'C', 'CID').then(id => document.getElementById('cust-cid').value = id);
-}
-
-// ============================================================
-// MASTER
-// ============================================================
-async function loadMaster() {
-  try {
-    const fetches = [fetch(API + '?sheet=Master')];
-    if (!productsCache) fetches.push(fetch(API + '?sheet=Products'));
-    if (!dataLoaded.pc) fetches.push(fetch(API + '?sheet=ProjectCustomer'));
-    if (!dataLoaded.customers) fetches.push(fetch(API + '?sheet=Customers'));
-
-    const results = await Promise.all(fetches);
-    let idx = 0;
-    const masterData = await results[idx++].json();
-    masterCache = Array.isArray(masterData) ? masterData : [];
-
-    if (!productsCache) {
-      const prodData = await results[idx++].json();
-      productsCache = Array.isArray(prodData) ? prodData : [];
-    }
-    if (!dataLoaded.pc) {
-      const pcData = await results[idx++].json();
-      allPcRaw = Array.isArray(pcData) ? pcData : [];
-      dataLoaded.pc = true;
-    }
-    if (!dataLoaded.customers) {
-      const custData = await results[idx++].json();
-      allCustomersRaw = Array.isArray(custData) ? custData : [];
-      dataLoaded.customers = true;
-    }
-
-    buildHiddenSets();
-    renderMasterList(); populateMasterCatDropdown();
-  } catch (e) { toast('マスタ読み込みエラー', 'error'); }
-}
-
-function renderMasterList() {
-  const categories = {};
-  masterCache.forEach(m => { if (!categories[m.CategoryName]) categories[m.CategoryName] = []; if (m.TagName) categories[m.CategoryName].push(m); });
-  const colors = ['#c0392b','#e74c3c','#d35400','#e67e22','#f39c12','#c0392b','#a93226','#922b21'];
-  let ci = 0, html = '';
-
-  const visibleProducts = productsCache ? productsCache.filter(p => !hiddenPIDs.has(p.PID)) : [];
-
-  for (const cat in categories) {
-    const color = colors[ci++ % colors.length];
-    html += `<div style="margin-bottom:15px;"><strong style="color:${color};">📁 ${escHtml(cat)}</strong>
-      <button class="btn btn-danger btn-sm" onclick="deleteCategory('${escAttr(cat)}')" style="margin-left:8px;">🗑️</button><div style="margin-top:6px;">`;
-    categories[cat].forEach(tag => {
-      const count = visibleProducts.filter(p => p.Tag === tag.TagName).length;
-      html += `<span class="tag-badge" style="background:${color}22;color:${color};border:1px solid ${color}44;" onclick="showTagDetail('${escAttr(tag.TagName)}')">${escHtml(tag.TagName)}<span class="tag-count">${count}</span>
-        <span onclick="event.stopPropagation();deleteTag('${escAttr(tag.MID)}')" style="cursor:pointer;margin-left:4px;">✕</span></span>`;
-    });
-    html += '</div></div>';
-  }
-  document.getElementById('master-list').innerHTML = html || '<p style="color:#999;">カテゴリがありません</p>';
-}
-
-function populateMasterCatDropdown() {
-  const cats = [...new Set(masterCache.map(m => m.CategoryName))];
-  document.getElementById('master-tag-cat').innerHTML = cats.map(c => `<option>${escHtml(c)}</option>`).join('');
-}
-
-async function saveCategory() {
-  const name = document.getElementById('master-cat').value.trim();
-  if (!name) { toast('カテゴリ名を入力', 'error'); return; }
-  if (masterCache.some(m => m.CategoryName === name)) { toast('既に存在します', 'error'); return; }
-  const mid = await generateId('Master', 'M', 'MID');
-  await fetch(API + '?sheet=Master', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: { MID: mid, CategoryName: name, TagName: '' } }) });
-  document.getElementById('master-cat').value = ''; toast('カテゴリを追加しました'); loadMaster();
-}
-
-async function saveTag() {
-  const cat = document.getElementById('master-tag-cat').value;
-  const tag = document.getElementById('master-tag').value.trim();
-  if (!cat || !tag) { toast('入力してください', 'error'); return; }
-  const mid = await generateId('Master', 'M', 'MID');
-  await fetch(API + '?sheet=Master', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: { MID: mid, CategoryName: cat, TagName: tag } }) });
-  document.getElementById('master-tag').value = ''; toast('タグを追加しました'); loadMaster();
-}
-
-async function deleteCategory(cat) {
-  if (!confirm(cat + ' を全て削除しますか？')) return;
-  const items = masterCache.filter(m => m.CategoryName === cat);
-  for (const item of items) await fetch(API + '/MID/' + item.MID + '?sheet=Master', { method: 'DELETE' });
-  toast('削除しました'); loadMaster();
-}
-
-async function deleteTag(mid) {
-  if (!confirm('タグを削除しますか？')) return;
-  await fetch(API + '/MID/' + mid + '?sheet=Master', { method: 'DELETE' });
-  toast('削除しました'); loadMaster();
-}
-
-function showTagDetail(tagName) {
-  if (!productsCache) return;
-  const visibleProducts = productsCache.filter(p => !hiddenPIDs.has(p.PID));
-  const items = visibleProducts.filter(p => p.Tag === tagName);
-  const pids = [...new Set(items.map(i => i.PID))];
-  let body = '';
-  if (items.length > 0) {
-    const totalQty = items.reduce((s, i) => s + Number(i.Qty || 0), 0);
-    const avgQty = (totalQty / items.length).toFixed(1);
-    const avgCostB = (items.reduce((s, i) => s + Number(i.CostB || 0), 0) / items.length).toFixed(0);
-    const avgPrice = (items.reduce((s, i) => s + Number(i.Price || 0), 0) / items.length).toFixed(0);
-    body += `
-      <div class="tag-stats-grid">
-        <div class="tag-stat-card"><div class="ts-label">📋 使用案件数</div><div class="ts-value">${pids.length}<span style="font-size:0.6em;color:#999;"> 件</span></div></div>
-        <div class="tag-stat-card"><div class="ts-label">📦 合計数量</div><div class="ts-value">${totalQty}<span style="font-size:0.6em;color:#999;"> 個</span></div></div>
-        <div class="tag-stat-card"><div class="ts-label">📊 平均数量</div><div class="ts-value">${avgQty}</div></div>
-        <div class="tag-stat-card"><div class="ts-label">💰 平均原価</div><div class="ts-value">${fmt(avgCostB)}</div></div>
-        <div class="tag-stat-card"><div class="ts-label">🏷️ 平均単価</div><div class="ts-value">${fmt(avgPrice)}</div></div>
-      </div>`;
-    body += `<table class="detail-view-table"><thead><tr><th>PID</th><th>商品名</th><th>数量</th><th>原価</th><th>単価</th></tr></thead><tbody>`;
-    items.forEach(i => { body += `<tr><td>${escHtml(i.PID)}</td><td>${escHtml(i.ProductName || '')}</td><td>${i.Qty}</td><td>${fmt(i.CostB)}</td><td>${fmt(i.Price)}</td></tr>`; });
-    body += '</tbody></table>';
-  } else {
-    body += `<div class="tag-stats-grid"><div class="tag-stat-card wide"><div class="ts-label">📋 使用案件数</div><div class="ts-value" style="color:#999;">0 件</div></div></div><p style="color:#999;text-align:center;">使用データなし</p>`;
-  }
-  document.getElementById('tag-modal-title').textContent = '🏷️ ' + tagName;
-  document.getElementById('tag-modal-body').innerHTML = body;
-  document.getElementById('tag-modal').classList.add('active');
-}
-
-function closeTagModal() { document.getElementById('tag-modal').classList.remove('active'); }
-</script>
-<script>
-// ============================================================
-// REGISTER PAGE
-// ============================================================
-let detailCounter = 0;
-
-async function initRegister() {
-  const pid = await generateId('Products', 'P', 'PID');
-  document.getElementById('reg-pid').value = pid;
-  document.getElementById('reg-project-name').value = '';
-  document.getElementById('reg-status').value = '見積中';
-  document.getElementById('reg-deadline').value = '';
-  document.getElementById('reg-address-jp').value = '';
-  document.getElementById('reg-address-en').value = '';
-
-  try {
-    const [custRes, pcRes] = await Promise.all([
-      fetch(API + '?sheet=Customers'),
-      fetch(API + '?sheet=ProjectCustomer')
-    ]);
-    allCustomersRaw = await custRes.json();
-    if (!Array.isArray(allCustomersRaw)) allCustomersRaw = [];
-    allPcRaw = await pcRes.json();
-    if (!Array.isArray(allPcRaw)) allPcRaw = [];
-    dataLoaded.customers = true;
-    dataLoaded.pc = true;
-    buildHiddenSets();
-    customersCache = getVisibleCustomers();
-    document.getElementById('reg-customer').innerHTML = '<option value="">-- 顧客を選択 --</option>' +
-      customersCache.map(c => `<option value="${escHtml(c.CID)}">${escHtml(c.CustomerName)}</option>`).join('');
-  } catch (e) {}
-
-  try {
-    const res = await fetch(API + '?sheet=Master');
-    const data = await res.json();
-    masterCache = Array.isArray(data) ? data : [];
-  } catch (e) {}
-
-  detailCounter = 0;
-  document.getElementById('detail-rows').innerHTML = '';
-  addDetailRow();
-  updateTotals();
-}
-
-function onRegCustomerChange() {
-  const cid = document.getElementById('reg-customer').value;
-  document.getElementById('reg-address-jp').value = getCustomerAddressJP(cid);
-  document.getElementById('reg-address-en').value = getCustomerAddressEN(cid);
-}
-
-function getCategoryOptions() {
-  const cats = [...new Set(masterCache.map(m => m.CategoryName))];
-  return '<option value="">-- カテゴリ --</option>' + cats.map(c => `<option>${escHtml(c)}</option>`).join('');
-}
-
-function getTagOptions(category) {
-  const tags = masterCache.filter(m => m.CategoryName === category && m.TagName);
-  return '<option value="">-- タグ --</option>' + tags.map(t => `<option>${escHtml(t.TagName)}</option>`).join('');
-}
-
-function addDetailRow() {
-  detailCounter++;
-  const container = document.getElementById('detail-rows');
-  const item = document.createElement('div');
-  item.className = 'product-item';
-  item.setAttribute('data-idx', detailCounter);
-  item.innerHTML = `
-    <div class="product-item-header">
-      <span class="product-item-num">商品 #${detailCounter}</span>
-      <button class="btn btn-danger btn-sm" onclick="removeDetailRow(this)">✕ 削除</button>
-    </div>
-    <div class="form-row-3">
-      <div class="form-group"><label>カテゴリ</label><select class="d-category" onchange="onCategoryChange(this)">${getCategoryOptions()}</select></div>
-      <div class="form-group"><label>タグ</label><select class="d-tag"><option value="">-- タグ --</option></select></div>
-      <div class="form-group"><label>商品名</label><input type="text" class="d-name" placeholder="商品名"></div>
-    </div>
-    <div class="form-row-4">
-      <div class="form-group"><label>数量</label><input type="number" class="d-qty" value="1" min="1" oninput="calcAndUpdate()"></div>
-      <div class="form-group"><label>原価</label><input type="number" class="d-costB" value="0" oninput="calcAndUpdate()"></div>
-      <div class="form-group"><label>単価（売価）</label><input type="number" class="d-price" value="0" oninput="calcAndUpdate()"></div>
-    </div>
-    <div class="form-group"><label>備考</label><input type="text" class="d-memo" placeholder="備考"></div>
-    <div class="product-subtotals">
-      <div class="sub-item"><div class="sub-label">小計（原価×数量）</div><div class="sub-value d-subB">¥0</div></div>
-      <div class="sub-item"><div class="sub-label">小計売（単価×数量）</div><div class="sub-value d-subP">¥0</div></div>
-    </div>
-  `;
-  container.appendChild(item);
-}
-
-function removeDetailRow(btn) {
-  const container = document.getElementById('detail-rows');
-  if (container.children.length <= 1) { toast('最低1件必要です', 'error'); return; }
-  btn.closest('.product-item').remove();
-  calcAndUpdate();
-}
-
-function onCategoryChange(sel) {
-  const item = sel.closest('.product-item');
-  item.querySelector('.d-tag').innerHTML = getTagOptions(sel.value);
-}
-
-function calcAndUpdate() {
-  const items = document.querySelectorAll('#detail-rows .product-item');
-  let tB = 0, tP = 0;
-  items.forEach(item => {
-    const qty = Number(item.querySelector('.d-qty').value) || 0;
-    const costB = Number(item.querySelector('.d-costB').value) || 0;
-    const price = Number(item.querySelector('.d-price').value) || 0;
-    const subB = qty * costB, subP = qty * price;
-    item.querySelector('.d-subB').textContent = fmt(subB);
-    item.querySelector('.d-subP').textContent = fmt(subP);
-    tB += subB; tP += subP;
+/* ========== MASTER ========== */
+function getSortedCategories() {
+  const catMap = {};
+  masterCache.forEach(m => {
+    const cat = m.CategoryName; if (!cat) return;
+    const so = Number(m.SortOrder) || 99999;
+    if (!catMap[cat] || so < catMap[cat]) catMap[cat] = so;
   });
-  document.getElementById('total-costB').textContent = fmt(tB);
-  document.getElementById('total-price').textContent = fmt(tP);
-  const profitB = tP - tB;
-  const marginB = tP ? ((profitB / tP) * 100).toFixed(1) : '0.0';
-  const elB = document.getElementById('total-profitB');
-  elB.innerHTML = `<span class="${profitB >= 0 ? 'profit-positive' : 'profit-negative'}">${fmt(profitB)}（${marginB}%）</span>`;
+  return Object.keys(catMap).sort((a, b) => catMap[a] - catMap[b]);
 }
 
-function updateTotals() { calcAndUpdate(); }
-
-async function saveProject() {
-  const pid = document.getElementById('reg-pid').value;
-  const projectName = document.getElementById('reg-project-name').value.trim();
-  const cid = document.getElementById('reg-customer').value;
-  const status = document.getElementById('reg-status').value;
-  const deadline = document.getElementById('reg-deadline').value;
-  const addressJP = document.getElementById('reg-address-jp').value.trim();
-  const addressEN = document.getElementById('reg-address-en').value.trim();
-  if (!projectName) { toast('案件名を入力してください', 'error'); return; }
-  if (!cid) { toast('顧客を選択してください', 'error'); return; }
-  const items = document.querySelectorAll('#detail-rows .product-item');
-  const products = [];
-  items.forEach(item => {
-    const qty = Number(item.querySelector('.d-qty').value) || 0;
-    const costB = Number(item.querySelector('.d-costB').value) || 0;
-    const price = Number(item.querySelector('.d-price').value) || 0;
-    products.push({
-      PID: pid, ProjectName: projectName,
-      Category: item.querySelector('.d-category').value, Tag: item.querySelector('.d-tag').value,
-      ProductName: item.querySelector('.d-name').value.trim(),
-      Qty: qty, CostA: '', CostB: costB, Price: price,
-      SubtotalA: '', SubtotalB: qty * costB, SubtotalPrice: qty * price,
-      Memo: item.querySelector('.d-memo').value.trim()
+async function normalizeSortOrders(sortedCats) {
+  const patches = [];
+  sortedCats.forEach((cat, ci) => {
+    const tags = masterCache.filter(m => m.CategoryName === cat);
+    tags.sort((a, b) => (Number(a.SortOrder) || 0) - (Number(b.SortOrder) || 0));
+    tags.forEach((tag, ti) => {
+      const newSO = (ci + 1) * 1000 + ti;
+      if (Number(tag.SortOrder) !== newSO) { patches.push({ mid: tag.MID, so: newSO }); tag.SortOrder = String(newSO); }
     });
   });
-  try {
-    await fetch(API + '?sheet=Products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: products }) });
-    await fetch(API + '?sheet=ProjectCustomer', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: { PID: pid, CID: cid, Status: status, Deadline: deadline, DeliveryAddressJP: addressJP, DeliveryAddressEN: addressEN, Hidden: '' } }) });
-    productsCache = null;
-    toast('案件を保存しました！');
-    initRegister();
-  } catch (e) { toast('保存エラー: ' + e.message, 'error'); }
+  for (const p of patches) {
+    await fetch(API+'/MID/'+p.mid+'?sheet=Master',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:{SortOrder:String(p.so)}})});
+  }
+  return patches.length;
 }
 
-function resetRegister() { initRegister(); }
-</script>
-<script>
-// ============================================================
-// LIST PAGE
-// ============================================================
+async function moveCategory(catName, direction) {
+  const cats = getSortedCategories(), idx = cats.indexOf(catName);
+  if (idx < 0) return;
+  const newIdx = idx + direction;
+  if (newIdx < 0 || newIdx >= cats.length) return;
+  [cats[idx], cats[newIdx]] = [cats[newIdx], cats[idx]];
+  toast('🔄 並び替え中...', 'info');
+  await normalizeSortOrders(cats);
+  const r = await fetch(API+'?sheet=Master'); masterCache = await r.json();
+  renderMasterList(); populateMasterCatDropdown(); toast('✅ カテゴリ順を更新しました');
+}
+
+async function loadMaster(){
+  try{
+    const r=await fetch(API+'?sheet=Master');masterCache=await r.json();
+    if(!productsCache){const p=await fetch(API+'?sheet=Products');productsCache=await p.json();}
+    renderMasterList();populateMasterCatDropdown();
+  }catch(e){toast('マスタエラー','error');}
+}
+
+function renderMasterList(){
+  const sortedCats=getSortedCategories();
+  const colors=['#c0392b','#e74c3c','#d35400','#e67e22','#f39c12','#a93226','#922b21','#cb4335'];
+  let html='';
+  sortedCats.forEach((cat, ci) => {
+    const cl=colors[ci%colors.length];
+    const tags=masterCache.filter(m=>m.CategoryName===cat&&m.TagName);
+    tags.sort((a,b)=>(Number(a.SortOrder)||0)-(Number(b.SortOrder)||0));
+    const isFirst=ci===0, isLast=ci===sortedCats.length-1;
+    html+=`<div class="master-cat-block"><div class="master-cat-header"><div class="sort-btn-group"><button class="sort-btn sort-btn-up" onclick="moveCategory('${cat}',-1)" ${isFirst?'disabled':''} title="上へ">▲</button><button class="sort-btn sort-btn-down" onclick="moveCategory('${cat}',1)" ${isLast?'disabled':''} title="下へ">▼</button></div><span class="master-cat-name" style="color:${cl};">📁 ${cat}</span><button class="master-cat-del" onclick="deleteCategory('${cat}')" title="カテゴリ削除">🗑️</button></div><div class="master-tag-list">`;
+    tags.forEach(tag => {
+      const cnt=productsCache?productsCache.filter(p=>p.Tag===tag.TagName&&!hiddenPIDs.has(p.PID)).length:0;
+      html+=`<span class="master-tag-chip" onclick="showTagDetail('${tag.TagName}')">${tag.TagName}<span class="master-tag-count">${cnt}</span><button class="master-tag-del" onclick="event.stopPropagation();deleteTag('${tag.MID}')" title="タグ削除">×</button></span>`;
+    });
+    if(tags.length===0) html+=`<span style="font-size:0.82em;color:#94a3b8;">タグなし</span>`;
+    html+=`</div></div>`;
+  });
+  document.getElementById('master-list').innerHTML=html||'<p style="color:#999;">データなし</p>';
+}
+
+function populateMasterCatDropdown(){
+  const cats=getSortedCategories();
+  document.getElementById('master-tag-cat').innerHTML=cats.map(c=>`<option>${c}</option>`).join('');
+}
+
+async function saveCategory(){
+  const n=document.getElementById('master-cat').value.trim();
+  if(!n){toast('入力してください','error');return;}
+  if(masterCache.some(m=>m.CategoryName===n)){toast('既存','error');return;}
+  const mid=await generateId('Master','M','MID');
+  const cats=getSortedCategories();
+  const newCatOrder=(cats.length+1)*1000;
+  await fetch(API+'?sheet=Master',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:{MID:mid,CategoryName:n,TagName:'',SortOrder:String(newCatOrder)}})});
+  document.getElementById('master-cat').value='';toast('追加しました');loadMaster();
+}
+
+async function saveTag(){
+  const cat=document.getElementById('master-tag-cat').value,tag=document.getElementById('master-tag').value.trim();
+  if(!cat||!tag){toast('入力してください','error');return;}
+  const mid=await generateId('Master','M','MID');
+  const catTags=masterCache.filter(m=>m.CategoryName===cat);
+  const maxSO=catTags.reduce((mx,m)=>Math.max(mx,Number(m.SortOrder)||0),0);
+  await fetch(API+'?sheet=Master',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:{MID:mid,CategoryName:cat,TagName:tag,SortOrder:String(maxSO+1)}})});
+  document.getElementById('master-tag').value='';toast('追加しました');loadMaster();
+}
+
+async function deleteCategory(cat){
+  if(!confirm(cat+' を全削除？'))return;
+  for(const m of masterCache.filter(m=>m.CategoryName===cat))await fetch(API+'/MID/'+m.MID+'?sheet=Master',{method:'DELETE'});
+  toast('削除しました');loadMaster();
+}
+async function deleteTag(mid){if(!confirm('削除？'))return;await fetch(API+'/MID/'+mid+'?sheet=Master',{method:'DELETE'});toast('削除しました');loadMaster();}
+
+function showTagDetail(tagName){
+  if(!productsCache)return;
+  const items=productsCache.filter(p=>p.Tag===tagName&&!hiddenPIDs.has(p.PID));
+  const pids=[...new Set(items.map(i=>i.PID))];let body='';
+  if(items.length>0){
+    const tQ=items.reduce((s,i)=>s+Number(i.Qty||0),0),aQ=(tQ/items.length).toFixed(1),aCB=(items.reduce((s,i)=>s+Number(i.CostB||0),0)/items.length).toFixed(0),aP=(items.reduce((s,i)=>s+Number(i.Price||0),0)/items.length).toFixed(0);
+    body+=`<div class="tag-stats-grid"><div class="tag-stat-card"><div class="ts-label">📋 案件数</div><div class="ts-value">${pids.length}</div></div><div class="tag-stat-card"><div class="ts-label">📦 合計数量</div><div class="ts-value">${tQ}</div></div><div class="tag-stat-card"><div class="ts-label">📊 平均数量</div><div class="ts-value">${aQ}</div></div><div class="tag-stat-card"><div class="ts-label">💰 平均原価</div><div class="ts-value">${fmt(aCB)}</div></div><div class="tag-stat-card"><div class="ts-label">🏷️ 平均単価</div><div class="ts-value">${fmt(aP)}</div></div></div>`;
+    body+=`<table class="detail-view-table"><thead><tr><th>PID</th><th>商品名</th><th>数量</th><th>原価</th><th>単価</th></tr></thead><tbody>`;
+    items.forEach(i=>{body+=`<tr><td>${i.PID}</td><td>${i.ProductName||''}</td><td>${i.Qty}</td><td>${fmt(i.CostB)}</td><td>${fmt(i.Price)}</td></tr>`;});
+    body+='</tbody></table>';
+  } else {body+='<p style="color:#999;text-align:center;">使用データなし</p>';}
+  document.getElementById('tag-modal-title').textContent='🏷️ '+tagName;document.getElementById('tag-modal-body').innerHTML=body;document.getElementById('tag-modal').classList.add('active');
+}
+function closeTagModal(){document.getElementById('tag-modal').classList.remove('active');}
+
+/* ========== REGISTER ========== */
+async function initRegister(){
+  const pid=await generateId('Products','P','PID');document.getElementById('reg-pid').value=pid;
+  document.getElementById('reg-project-name').value='';document.getElementById('reg-status').value='見積中';document.getElementById('reg-deadline').value='';document.getElementById('reg-address-jp').value='';document.getElementById('reg-address-en').value='';
+  try{
+    const [cR,pcR]=await Promise.all([fetch(API+'?sheet=Customers'),fetch(API+'?sheet=ProjectCustomer')]);
+    const allCusts=await cR.json(), allPc=await pcR.json();
+    buildHiddenSets(allCusts,allPc);
+    customersCache=allCusts.filter(c=>!hiddenCIDs.has(c.CID));
+    document.getElementById('reg-customer').innerHTML='<option value="">-- 顧客を選択 --</option>'+customersCache.map(c=>`<option value="${c.CID}">${escHtml(c.CustomerName)}</option>`).join('');
+  }catch(e){}
+  try{const r=await fetch(API+'?sheet=Master');masterCache=await r.json();}catch(e){}
+  detailCounter=0;document.getElementById('detail-rows').innerHTML='';addDetailRow();calcAndUpdate();
+}
+function onRegCustomerChange(){
+  const cid=document.getElementById('reg-customer').value;
+  document.getElementById('reg-address-jp').value=getCustomerAddressJP(cid);
+  document.getElementById('reg-address-en').value=getCustomerAddressEN(cid);
+}
+function getCategoryOptions(){const cats=getSortedCategories();return '<option value="">-- カテゴリ --</option>'+cats.map(c=>`<option>${c}</option>`).join('');}
+function getTagOptions(cat){return '<option value="">-- タグ --</option>'+masterCache.filter(m=>m.CategoryName===cat&&m.TagName).sort((a,b)=>(Number(a.SortOrder)||0)-(Number(b.SortOrder)||0)).map(t=>`<option>${t.TagName}</option>`).join('');}
+
+function moveItem(btn, direction, containerId) {
+  const item=btn.closest('.product-item'),container=document.getElementById(containerId);
+  const items=Array.from(container.children),idx=items.indexOf(item),newIdx=idx+direction;
+  if(newIdx<0||newIdx>=items.length)return;
+  const sibling=items[newIdx];
+  if(direction===-1){container.insertBefore(item,sibling);item.classList.add('swap-up');sibling.classList.add('swap-down');}
+  else{container.insertBefore(sibling,item);sibling.classList.add('swap-up');item.classList.add('swap-down');}
+  setTimeout(()=>{item.classList.remove('swap-up','swap-down');sibling.classList.remove('swap-up','swap-down');},300);
+  renumberItems(containerId);
+}
+function renumberItems(containerId) {
+  const items=Array.from(document.getElementById(containerId).children);
+  items.forEach((it,i)=>{
+    const n=it.querySelector('.product-item-num');if(n)n.textContent='商品 #'+(i+1);
+    const u=it.querySelector('.item-sort-up'),d=it.querySelector('.item-sort-down');
+    if(u)u.disabled=(i===0);if(d)d.disabled=(i===items.length-1);
+  });
+}
+
+function addDetailRow(){
+  detailCounter++;const ct=document.getElementById('detail-rows'),it=document.createElement('div');it.className='product-item';
+  it.innerHTML=`<div class="product-item-header"><div style="display:flex;align-items:center;"><div class="item-sort-btn-group"><button class="item-sort-btn item-sort-up" onclick="moveItem(this,-1,'detail-rows')" title="上へ">▲</button><button class="item-sort-btn item-sort-down" onclick="moveItem(this,1,'detail-rows')" title="下へ">▼</button></div><span class="product-item-num">商品 #${detailCounter}</span></div><button class="btn btn-danger btn-sm" onclick="removeDetailRow(this)">✕</button></div><div class="form-row-3"><div class="form-group"><label>カテゴリ</label><select class="d-category" onchange="onCategoryChange(this)">${getCategoryOptions()}</select></div><div class="form-group"><label>タグ</label><select class="d-tag"><option value="">-- タグ --</option></select></div><div class="form-group"><label>商品名</label><input type="text" class="d-name" placeholder="商品名"></div></div><div class="form-row-3"><div class="form-group"><label>数量</label><input type="number" class="d-qty" value="1" min="1" oninput="calcAndUpdate()"></div><div class="form-group"><label>原価</label><input type="number" class="d-costB" value="0" oninput="calcAndUpdate()"></div><div class="form-group"><label>単価</label><input type="number" class="d-price" value="0" oninput="calcAndUpdate()"></div></div><div class="form-group"><label>備考</label><input type="text" class="d-memo" placeholder="備考"></div><div class="product-subtotals"><div class="sub-item"><div class="sub-label">小計原価</div><div class="sub-value d-subB">¥0</div></div><div class="sub-item"><div class="sub-label">小計売</div><div class="sub-value d-subP">¥0</div></div></div>`;
+  ct.appendChild(it);renumberItems('detail-rows');
+}
+function removeDetailRow(btn){const ct=document.getElementById('detail-rows');if(ct.children.length<=1){toast('最低1件','error');return;}btn.closest('.product-item').remove();renumberItems('detail-rows');calcAndUpdate();}
+function onCategoryChange(sel){sel.closest('.product-item').querySelector('.d-tag').innerHTML=getTagOptions(sel.value);}
+function calcAndUpdate(){
+  const items=document.querySelectorAll('#detail-rows .product-item');let tB=0,tP=0;
+  items.forEach(it=>{const q=Number(it.querySelector('.d-qty').value)||0,cB=Number(it.querySelector('.d-costB').value)||0,p=Number(it.querySelector('.d-price').value)||0,sB=q*cB,sP=q*p;it.querySelector('.d-subB').textContent=fmt(sB);it.querySelector('.d-subP').textContent=fmt(sP);tB+=sB;tP+=sP;});
+  document.getElementById('total-costB').textContent=fmt(tB);document.getElementById('total-price').textContent=fmt(tP);
+  const pB=tP-tB,mB=tP?((pB/tP)*100).toFixed(1):'0.0';
+  const eB=document.getElementById('total-profitB');eB.innerHTML=`<span class="${pB>=0?'profit-positive':'profit-negative'}">${fmt(pB)}（${mB}%）</span>`;
+}
+
+async function saveProject(){
+  const pid=document.getElementById('reg-pid').value,pn=document.getElementById('reg-project-name').value.trim(),cid=document.getElementById('reg-customer').value,st=document.getElementById('reg-status').value,dl=document.getElementById('reg-deadline').value,aJ=document.getElementById('reg-address-jp').value.trim(),aE=document.getElementById('reg-address-en').value.trim();
+  if(!pn){toast('案件名を入力','error');return;}if(!cid){toast('顧客を選択','error');return;}
+  const items=document.querySelectorAll('#detail-rows .product-item'),products=[];
+  let sortIdx=0;
+  items.forEach(it=>{const q=Number(it.querySelector('.d-qty').value)||0,cB=Number(it.querySelector('.d-costB').value)||0,p=Number(it.querySelector('.d-price').value)||0;products.push({PID:pid,ProjectName:pn,Category:it.querySelector('.d-category').value,Tag:it.querySelector('.d-tag').value,ProductName:it.querySelector('.d-name').value.trim(),Qty:q,CostA:'',CostB:cB,Price:p,SubtotalA:'',SubtotalB:q*cB,SubtotalPrice:q*p,Memo:it.querySelector('.d-memo').value.trim(),SortOrder:String(sortIdx++)});});
+  try{
+    await fetch(API+'?sheet=Products',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:products})});
+    await fetch(API+'?sheet=ProjectCustomer',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:{PID:pid,CID:cid,Status:st,Deadline:dl,DeliveryAddressJP:aJ,DeliveryAddressEN:aE,Hidden:'',CreatedDate:todayISO()}})});
+    productsCache=null;toast('保存しました！');initRegister();
+  }catch(e){toast('保存エラー','error');}
+}
+function resetRegister(){initRegister();}
+
+/* ========== LIST ========== */
 let listData = [];
 
-async function loadList() {
-  try {
-    const [pcRes, prodRes, custRes] = await Promise.all([
-      fetch(API + '?sheet=ProjectCustomer'),
-      fetch(API + '?sheet=Products'),
-      fetch(API + '?sheet=Customers')
-    ]);
-    const pcData = await pcRes.json();
-    const prodData = await prodRes.json();
-    const custData = await custRes.json();
-    productsCache = Array.isArray(prodData) ? prodData : [];
-    allCustomersRaw = Array.isArray(custData) ? custData : [];
-    allPcRaw = Array.isArray(pcData) ? pcData : [];
-    dataLoaded.customers = true;
-    dataLoaded.pc = true;
-    buildHiddenSets();
-    customersCache = getVisibleCustomers();
-    pcCache = getVisiblePCs();
-
-    listData = pcCache.map(pc => {
-      const customer = custData.find(c => c.CID === pc.CID);
-      const products = prodData.filter(p => p.PID === pc.PID);
-      const totalCostB = products.reduce((s, p) => s + Number(p.SubtotalB || 0), 0);
-      const totalPrice = products.reduce((s, p) => s + Number(p.SubtotalPrice || 0), 0);
-      return { ...pc, CustomerName: customer ? customer.CustomerName : pc.CID, products, totalCostB, totalPrice, profitB: totalPrice - totalCostB };
+async function loadList(){
+  try{
+    const [pcR,pdR,cR]=await Promise.all([fetch(API+'?sheet=ProjectCustomer'),fetch(API+'?sheet=Products'),fetch(API+'?sheet=Customers')]);
+    const pcD=await pcR.json(),pdD=await pdR.json(),cD=await cR.json();
+    productsCache=pdD;
+    buildHiddenSets(cD,pcD);
+    customersCache=cD.filter(c=>!hiddenCIDs.has(c.CID));
+    pcCache=pcD.filter(pc=>!hiddenPIDs.has(pc.PID));
+    listData=pcCache.map(pc=>{
+      const cust=cD.find(c=>c.CID===pc.CID);
+      const prods=pdD.filter(p=>p.PID===pc.PID).sort((a,b)=>(Number(a.SortOrder)||0)-(Number(b.SortOrder)||0));
+      const tCB=prods.reduce((s,p)=>s+Number(p.SubtotalB||0),0),tP=prods.reduce((s,p)=>s+Number(p.SubtotalPrice||0),0);
+      return {...pc,CustomerName:cust?cust.CustomerName:pc.CID,products:prods,totalCostB:tCB,totalPrice:tP,profitB:tP-tCB};
     });
     filterList();
-  } catch (e) {
-    document.getElementById('project-list').innerHTML = '<p style="color:#e74c3c;">読み込みエラー</p>';
-  }
+  }catch(e){document.getElementById('project-list').innerHTML='<p style="color:#e74c3c;">読み込みエラー</p>';}
 }
 
-function filterList() {
-  const query = document.getElementById('search-input').value.toLowerCase();
-  const sf = document.getElementById('filter-status').value;
-  let filtered = listData;
-  if (query) filtered = filtered.filter(d => d.PID.toLowerCase().includes(query) || (d.products[0]?.ProjectName || '').toLowerCase().includes(query) || d.CustomerName.toLowerCase().includes(query));
-  if (sf) filtered = filtered.filter(d => d.Status === sf);
-  document.getElementById('result-count').textContent = filtered.length + '件';
-  renderList(filtered);
+function filterList(){
+  const q=document.getElementById('search-input').value.toLowerCase(),sf=document.getElementById('filter-status').value;
+  let f=listData;
+  if(q) f=f.filter(d=>d.PID.toLowerCase().includes(q)||(d.products[0]?.ProjectName||'').toLowerCase().includes(q)||d.CustomerName.toLowerCase().includes(q));
+  if(sf) f=f.filter(d=>d.Status===sf);
+  document.getElementById('result-count').textContent=f.length+'件';
+  renderList(f);
 }
 
-function getDeadlineInfo(deadline, status) {
-  if (!deadline) return { text: '', cls: '' };
-  const dateStr = formatDate(deadline);
-  if (status === '完了') return { text: '✅ ' + dateStr, cls: 'deadline-ok' };
-  const d = parseDeadline(deadline);
-  if (!d) return { text: deadline, cls: '' };
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const diff = Math.ceil((d - today) / 86400000);
-  if (diff < 0) return { text: '⚠️ ' + Math.abs(diff) + '日超過', cls: 'deadline-near' };
-  if (diff === 0) return { text: '⚠️ 本日納期', cls: 'deadline-near' };
-  if (diff <= 7) return { text: '📅 残' + diff + '日', cls: 'deadline-soon' };
-  return { text: '📅 ' + dateStr, cls: 'deadline-ok' };
+function getDeadlineInfo(dl,st){
+  if(!dl)return{text:'',cls:''};const ds=formatDate(dl);
+  if(st==='完了')return{text:'✅ '+ds,cls:'deadline-ok'};
+  const d=parseDeadline(dl);if(!d)return{text:dl,cls:''};
+  const today=new Date();today.setHours(0,0,0,0);const diff=Math.ceil((d-today)/86400000);
+  if(diff<0)return{text:'⚠️ '+Math.abs(diff)+'日超過',cls:'deadline-near'};
+  if(diff===0)return{text:'⚠️ 本日納期',cls:'deadline-near'};
+  if(diff<=7)return{text:'📅 残'+diff+'日',cls:'deadline-soon'};
+  return{text:'📅 '+ds,cls:'deadline-ok'};
 }
 
-function renderAddressLine(label, value) {
-  if (!value) return '';
-  return `<div class="addr-line"><span class="addr-icon">📍</span><strong>${label}:</strong> <span class="addr-text">${escHtml(value)}</span><button class="btn-copy-inline" onclick="event.stopPropagation();copyValue('${escAttr(value)}')" title="コピー">📋</button></div>`;
+function renderAddressLine(label,val){
+  if(!val)return '';const e=escHtml(val);
+  return `<div class="addr-line"><span>📍</span><strong>${label}:</strong> <span class="addr-text">${e}</span><button class="btn-copy-inline" onclick="event.stopPropagation();copyValue('${e.replace(/'/g,"\\'")}')" title="コピー">📋</button></div>`;
 }
 
-function renderList(data) {
-  const container = document.getElementById('project-list');
-  if (!data.length) { container.innerHTML = '<p style="color:#999;text-align:center;padding:20px;">該当なし</p>'; return; }
-  container.innerHTML = data.map(d => {
-    const pn = d.products[0]?.ProjectName || '不明';
-    const dl = getDeadlineInfo(d.Deadline, d.Status);
-    const deadlineDisplay = formatDate(d.Deadline) || '未設定';
-    const addrJP = d.DeliveryAddressJP || '';
-    const addrEN = d.DeliveryAddressEN || '';
-    return `
-    <div class="project-card" id="card-${escHtml(d.PID)}">
-      <div class="project-card-header" onclick="toggleCard(this)">
-        <div class="left">
-          <span class="pid">${escHtml(d.PID)}</span>
-          <span class="pname">${escHtml(pn)}</span>
-          <span class="customer">👤 ${escHtml(d.CustomerName)}</span>
-          ${dl.text ? `<span class="deadline-info ${dl.cls}">${dl.text}</span>` : ''}
-        </div>
-        <div style="display:flex;align-items:center;gap:10px;">
-          <select class="status-badge status-${escHtml(d.Status)}" onchange="updateStatus('${escAttr(d.PID)}', this)" onclick="event.stopPropagation();">
-            <option value="見積中" ${d.Status === '見積中' ? 'selected' : ''}>見積中</option>
-            <option value="製作中" ${d.Status === '製作中' ? 'selected' : ''}>製作中</option>
-            <option value="運送中" ${d.Status === '運送中' ? 'selected' : ''}>運送中</option>
-            <option value="完了" ${d.Status === '完了' ? 'selected' : ''}>完了</option>
-          </select>
-          <span style="font-weight:700;">${fmt(d.totalPrice)}</span>
-        </div>
-      </div>
-      <div class="project-card-body">
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;font-size:0.85em;">
-          <div><strong>PID:</strong> ${escHtml(d.PID)}</div>
-          <div><strong>顧客:</strong> ${escHtml(d.CustomerName)}</div>
-          <div><strong>納期:</strong> <span class="${dl.cls}">${deadlineDisplay}</span></div>
-        </div>
-        <div class="address-display" style="margin-bottom:12px;">
-          ${renderAddressLine('納品先JP', addrJP)}
-          ${renderAddressLine('納品先EN', addrEN)}
-          ${(addrJP || addrEN) ? `<button class="btn-copy-both" onclick="event.stopPropagation();copyBothValues('${escAttr(addrJP)}','${escAttr(addrEN)}')" style="margin-top:6px;font-size:0.8em;">📋 住所を両方コピー（JP＋EN）</button>` : ''}
-        </div>
-        <table class="detail-view-table">
-          <thead><tr><th>カテゴリ</th><th>タグ</th><th>商品名</th><th>数量</th><th>原価</th><th>単価</th><th>小計原価</th><th>小計売価</th><th>備考</th></tr></thead>
-          <tbody>${d.products.map(p => `<tr><td>${escHtml(p.Category || '')}</td><td>${escHtml(p.Tag || '')}</td><td>${escHtml(p.ProductName || '')}</td><td>${p.Qty}</td><td>${fmt(p.CostB)}</td><td>${fmt(p.Price)}</td><td>${fmt(p.SubtotalB)}</td><td>${fmt(p.SubtotalPrice)}</td><td>${escHtml(p.Memo || '')}</td></tr>`).join('')}</tbody>
-        </table>
-        <div class="summary-box">
-          <div class="summary-item"><div class="s-label">原価合計</div><div class="s-value">${fmt(d.totalCostB)}</div></div>
-          <div class="summary-item"><div class="s-label">売価合計</div><div class="s-value">${fmt(d.totalPrice)}</div></div>
-          <div class="summary-item"><div class="s-label">粗利（率）</div><div class="s-value ${d.profitB >= 0 ? 'profit-positive' : 'profit-negative'}">${fmt(d.profitB)}（${d.totalPrice ? ((d.profitB / d.totalPrice) * 100).toFixed(1) : 0}%）</div></div>
-          <div class="summary-item" style="grid-column: span 3;">
-            <div class="s-label">操作</div>
-            <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:4px;">
-              <button class="btn btn-warning btn-sm" onclick="openEditModal('${escAttr(d.PID)}')">✏️ 編集</button>
-              <button class="btn btn-danger btn-sm" onclick="deleteProject('${escAttr(d.PID)}')">🗑️ 削除</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>`;
+function renderList(data){
+  const ct=document.getElementById('project-list');
+  if(!data.length){ct.innerHTML='<p style="color:#999;text-align:center;padding:20px;">該当なし</p>';return;}
+  ct.innerHTML=data.map(d=>{
+    const pn=d.products[0]?.ProjectName||'不明',dl=getDeadlineInfo(d.Deadline,d.Status),ddsp=formatDate(d.Deadline)||'未設定';
+    const aJ=d.DeliveryAddressJP||'',aE=d.DeliveryAddressEN||'',eJ=escHtml(aJ),eE=escHtml(aE);
+    const cdDisp=formatDate(d.CreatedDate)||'未設定';
+    return `<div class="project-card" id="card-${d.PID}"><div class="project-card-header" onclick="toggleCard(this)"><div class="left"><span class="pid">${d.PID}</span><span class="pname">${escHtml(pn)}</span><span class="customer">👤 ${escHtml(d.CustomerName)}</span>${dl.text?`<span class="deadline-info ${dl.cls}">${dl.text}`:''}</span></div><div style="display:flex;align-items:center;gap:10px;"><select class="status-badge status-${d.Status}" onchange="updateStatus('${d.PID}',this)" onclick="event.stopPropagation();"><option value="見積中" ${d.Status==='見積中'?'selected':''}>見積中</option><option value="製作中" ${d.Status==='製作中'?'selected':''}>製作中</option><option value="運送中" ${d.Status==='運送中'?'selected':''}>運送中</option><option value="完了" ${d.Status==='完了'?'selected':''}>完了</option></select><span style="font-weight:700;">${fmt(d.totalPrice)}</span></div></div>
+    <div class="project-card-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:12px;font-size:0.85em;"><div><strong>PID:</strong> ${d.PID}</div><div><strong>顧客:</strong> ${escHtml(d.CustomerName)}</div><div><strong>納期:</strong> <span class="${dl.cls}">${ddsp}</span></div><div><strong>登録日:</strong> ${cdDisp}</div></div>
+      <div class="address-display" style="margin-bottom:12px;">${renderAddressLine('納品先JP',aJ)}${renderAddressLine('納品先EN',aE)}${(aJ||aE)?`<button class="btn-copy-both" onclick="event.stopPropagation();copyBothValues('${eJ.replace(/'/g,"\\'")}','${eE.replace(/'/g,"\\'")}')" style="margin-top:6px;font-size:0.8em;">📋 住所を両方コピー</button>`:''}</div>
+      <table class="detail-view-table"><thead><tr><th>カテゴリ</th><th>タグ</th><th>商品名</th><th>数量</th><th>原価</th><th>単価</th><th>小計</th><th>小計売</th><th>備考</th></tr></thead><tbody>${d.products.map(p=>`<tr><td>${p.Category||''}</td><td>${p.Tag||''}</td><td>${p.ProductName||''}</td><td>${p.Qty}</td><td>${fmt(p.CostB)}</td><td>${fmt(p.Price)}</td><td>${fmt(p.SubtotalB)}</td><td>${fmt(p.SubtotalPrice)}</td><td>${p.Memo||''}</td></tr>`).join('')}</tbody></table>
+      <div class="summary-box"><div class="summary-item"><div class="s-label">原価合計</div><div class="s-value">${fmt(d.totalCostB)}</div></div><div class="summary-item"><div class="s-label">売価合計</div><div class="s-value">${fmt(d.totalPrice)}</div></div><div class="summary-item"><div class="s-label">粗利（率）</div><div class="s-value ${d.profitB>=0?'profit-positive':'profit-negative'}">${fmt(d.profitB)}（${d.totalPrice?((d.profitB/d.totalPrice)*100).toFixed(1):0}%）</div></div><div class="summary-item"><div class="s-label">操作</div><div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;"><button class="btn btn-warning btn-sm" onclick="openEditModal('${d.PID}')">✏️ 編集</button><button class="btn btn-success btn-sm" onclick="event.stopPropagation();openCloneModal('${d.PID}')">📋 複製</button><button class="btn btn-danger btn-sm" onclick="deleteProject('${d.PID}')">🗑️ 削除</button></div></div></div>
+    </div></div>`;
   }).join('');
 }
 
-function toggleCard(header) { header.nextElementSibling.classList.toggle('open'); }
+function toggleCard(h){h.nextElementSibling.classList.toggle('open');}
 
-// ============================================================
-// EDIT PROJECT MODAL
-// ============================================================
-function openEditModal(pid) {
-  editingPID = pid;
-  editDetailCounter = 0;
-  const d = listData.find(x => x.PID === pid);
-  if (!d) return;
-  const pn = d.products[0]?.ProjectName || '';
-  const deadlineISO = formatDateISO(d.Deadline);
-  const currentAddrJP = d.DeliveryAddressJP || '';
-  const currentAddrEN = d.DeliveryAddressEN || '';
-
-  const custOptions = customersCache.map(c =>
-    `<option value="${escHtml(c.CID)}" ${c.CID === d.CID ? 'selected' : ''}>${escHtml(c.CustomerName)}</option>`
-  ).join('');
-
-  let html = `
-    <div class="edit-modal-section">
-      <h4>📝 案件情報</h4>
-      <div class="form-row">
-        <div class="form-group">
-          <label>PID</label>
-          <input type="text" value="${escHtml(pid)}" readonly style="background:#f0f0f0;">
-        </div>
-        <div class="form-group">
-          <label>案件名 *</label>
-          <input type="text" id="edit-project-name" value="${escHtml(pn)}">
-        </div>
-      </div>
-      <div class="form-group">
-        <label>顧客</label>
-        <select id="edit-customer" onchange="onEditCustomerChange()">${custOptions}</select>
-      </div>
-      <div class="form-group">
-        <label>📍 納品先住所（日本語）</label>
-        <div class="addr-field-wrap">
-          <input type="text" id="edit-address-jp" value="${escHtml(currentAddrJP)}" placeholder="手動変更可">
-          <button class="btn-copy" onclick="copyText('edit-address-jp')" title="コピー">📋</button>
-        </div>
-      </div>
-      <div class="form-group">
-        <label>📍 納品先住所（英語）</label>
-        <div class="addr-field-wrap">
-          <input type="text" id="edit-address-en" value="${escHtml(currentAddrEN)}" placeholder="Editable">
-          <button class="btn-copy" onclick="copyText('edit-address-en')" title="コピー">📋</button>
-        </div>
-      </div>
-      <div class="form-group">
-        <button class="btn-copy-both" onclick="copyBothAddresses('edit-address-jp','edit-address-en')">📋 住所を両方コピー（JP＋EN）</button>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>ステータス</label>
-          <select id="edit-status">
-            <option value="見積中" ${d.Status === '見積中' ? 'selected' : ''}>見積中</option>
-            <option value="製作中" ${d.Status === '製作中' ? 'selected' : ''}>製作中</option>
-            <option value="運送中" ${d.Status === '運送中' ? 'selected' : ''}>運送中</option>
-            <option value="完了" ${d.Status === '完了' ? 'selected' : ''}>完了</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>納期</label>
-          <input type="date" id="edit-deadline" value="${deadlineISO}">
-        </div>
-      </div>
-    </div>
-
-    <div class="edit-modal-section">
-      <h4>📦 商品明細</h4>
-      <div id="edit-detail-rows"></div>
-      <button class="btn btn-secondary btn-sm" onclick="addEditDetailRow()" style="margin-top:8px;">＋ 商品を追加</button>
-
-      <div class="totals-grid" id="edit-totals-area">
-        <div class="total-card"><div class="t-label">原価合計</div><div class="t-value" id="edit-total-costB">¥0</div></div>
-        <div class="total-card"><div class="t-label">売価合計</div><div class="t-value" id="edit-total-price">¥0</div></div>
-        <div class="total-card"><div class="t-label">粗利（率）</div><div class="t-value" id="edit-total-profitB">¥0</div></div>
-      </div>
-    </div>
-  `;
-
-  document.getElementById('edit-modal-pid').textContent = pid;
-  document.getElementById('edit-modal-body').innerHTML = html;
-
-  if (d.products.length > 0) {
-    d.products.forEach(p => addEditDetailRow(p));
-  } else {
-    addEditDetailRow();
-  }
-
-  editCalcAndUpdate();
-  document.getElementById('edit-modal').classList.add('active');
+function openEditModal(pid){
+  editingPID=pid;editDetailCounter=0;const d=listData.find(x=>x.PID===pid);if(!d)return;
+  const pn=d.products[0]?.ProjectName||'',dlISO=formatDateISO(d.Deadline),cAJ=d.DeliveryAddressJP||'',cAE=d.DeliveryAddressEN||'';
+  const cdISO=formatDateISO(d.CreatedDate)||'';
+  const cOpts=customersCache.map(c=>`<option value="${c.CID}" ${c.CID===d.CID?'selected':''}>${escHtml(c.CustomerName)}</option>`).join('');
+  let html=`<div class="edit-modal-section"><h4>📝 案件情報</h4><div class="form-row"><div class="form-group"><label>PID</label><input type="text" value="${escHtml(pid)}" readonly style="background:#f0f0f0;"></div><div class="form-group"><label>案件名 *</label><input type="text" id="edit-project-name" value="${escHtml(pn)}"></div></div><div class="form-group"><label>顧客</label><select id="edit-customer" onchange="onEditCustomerChange()">${cOpts}</select></div><div class="form-group"><label>📍 納品先住所（JP）</label><div class="addr-field-wrap"><input type="text" id="edit-address-jp" value="${escHtml(cAJ)}"><button class="btn-copy" onclick="copyText('edit-address-jp')">📋</button></div></div><div class="form-group"><label>📍 納品先住所（EN）</label><div class="addr-field-wrap"><input type="text" id="edit-address-en" value="${escHtml(cAE)}"><button class="btn-copy" onclick="copyText('edit-address-en')">📋</button></div></div><div class="form-group"><button class="btn-copy-both" onclick="copyBothAddresses('edit-address-jp','edit-address-en')">📋 住所を両方コピー</button></div><div class="form-row-3"><div class="form-group"><label>ステータス</label><select id="edit-status"><option value="見積中" ${d.Status==='見積中'?'selected':''}>見積中</option><option value="製作中" ${d.Status==='製作中'?'selected':''}>製作中</option><option value="運送中" ${d.Status==='運送中'?'selected':''}>運送中</option><option value="完了" ${d.Status==='完了'?'selected':''}>完了</option></select></div><div class="form-group"><label>納期</label><input type="date" id="edit-deadline" value="${dlISO}"></div><div class="form-group"><label>📅 登録日</label><input type="date" id="edit-created-date" value="${cdISO}"></div></div></div>`;
+  html+=`<div class="edit-modal-section"><h4>📦 商品明細</h4><div id="edit-detail-rows"></div><button class="btn btn-secondary btn-sm" onclick="addEditDetailRow()" style="margin-top:8px;">＋ 商品を追加</button><div class="totals-grid"><div class="total-card"><div class="t-label">原価合計</div><div class="t-value" id="edit-total-costB">¥0</div></div><div class="total-card"><div class="t-label">売価合計</div><div class="t-value" id="edit-total-price">¥0</div></div><div class="total-card"><div class="t-label">粗利（率）</div><div class="t-value" id="edit-total-profitB">¥0</div></div></div></div>`;
+  document.getElementById('edit-modal-pid').textContent=pid;document.getElementById('edit-modal-body').innerHTML=html;
+  if(d.products.length>0){d.products.forEach(p=>addEditDetailRow(p));}else{addEditDetailRow();}
+  editCalcAndUpdate();document.getElementById('edit-modal').classList.add('active');
 }
 
-function onEditCustomerChange() {
-  const cid = document.getElementById('edit-customer').value;
-  document.getElementById('edit-address-jp').value = getCustomerAddressJP(cid);
-  document.getElementById('edit-address-en').value = getCustomerAddressEN(cid);
+function onEditCustomerChange(){const cid=document.getElementById('edit-customer').value;document.getElementById('edit-address-jp').value=getCustomerAddressJP(cid);document.getElementById('edit-address-en').value=getCustomerAddressEN(cid);}
+
+function addEditDetailRow(data){
+  editDetailCounter++;const ct=document.getElementById('edit-detail-rows'),it=document.createElement('div');it.className='product-item';
+  const cat=(data?.Category)||'',tag=(data?.Tag)||'',nm=(data?.ProductName)||'',qty=(data?.Qty)||1,cB=(data?.CostB)||0,pr=(data?.Price)||0,memo=(data?.Memo)||'';
+  const cats=getSortedCategories();
+  const catO='<option value="">-- カテゴリ --</option>'+cats.map(c=>`<option ${c===cat?'selected':''}>${escHtml(c)}</option>`).join('');
+  let tagO='<option value="">-- タグ --</option>';if(cat){tagO='<option value="">-- タグ --</option>'+masterCache.filter(m=>m.CategoryName===cat&&m.TagName).sort((a,b)=>(Number(a.SortOrder)||0)-(Number(b.SortOrder)||0)).map(t=>`<option ${t.TagName===tag?'selected':''}>${t.TagName}</option>`).join('');}
+  it.innerHTML=`<div class="product-item-header"><div style="display:flex;align-items:center;"><div class="item-sort-btn-group"><button class="item-sort-btn item-sort-up" onclick="moveItem(this,-1,'edit-detail-rows')" title="上へ">▲</button><button class="item-sort-btn item-sort-down" onclick="moveItem(this,1,'edit-detail-rows')" title="下へ">▼</button></div><span class="product-item-num">商品 #${editDetailCounter}</span></div><button class="btn btn-danger btn-sm" onclick="removeEditDetailRow(this)">✕</button></div><div class="form-row-3"><div class="form-group"><label>カテゴリ</label><select class="d-category" onchange="onEditCategoryChange(this)">${catO}</select></div><div class="form-group"><label>タグ</label><select class="d-tag">${tagO}</select></div><div class="form-group"><label>商品名</label><input type="text" class="d-name" value="${escHtml(nm)}"></div></div><div class="form-row-3"><div class="form-group"><label>数量</label><input type="number" class="d-qty" value="${qty}" min="1" oninput="editCalcAndUpdate()"></div><div class="form-group"><label>原価</label><input type="number" class="d-costB" value="${cB}" oninput="editCalcAndUpdate()"></div><div class="form-group"><label>単価</label><input type="number" class="d-price" value="${pr}" oninput="editCalcAndUpdate()"></div></div><div class="form-group"><label>備考</label><input type="text" class="d-memo" value="${escHtml(memo)}"></div><div class="product-subtotals"><div class="sub-item"><div class="sub-label">小計原価</div><div class="sub-value d-subB">¥0</div></div><div class="sub-item"><div class="sub-label">小計売</div><div class="sub-value d-subP">¥0</div></div></div>`;
+  ct.appendChild(it);renumberItems('edit-detail-rows');editCalcAndUpdate();
+}
+function removeEditDetailRow(btn){const ct=document.getElementById('edit-detail-rows');if(ct.children.length<=1){toast('最低1件','error');return;}btn.closest('.product-item').remove();renumberItems('edit-detail-rows');editCalcAndUpdate();}
+function onEditCategoryChange(sel){sel.closest('.product-item').querySelector('.d-tag').innerHTML=getTagOptions(sel.value);}
+
+function editCalcAndUpdate(){
+  const ct=document.getElementById('edit-detail-rows');if(!ct)return;
+  const items=ct.querySelectorAll('.product-item');let tB=0,tP=0;
+  items.forEach(it=>{const q=Number(it.querySelector('.d-qty').value)||0,cB=Number(it.querySelector('.d-costB').value)||0,p=Number(it.querySelector('.d-price').value)||0,sB=q*cB,sP=q*p;it.querySelector('.d-subB').textContent=fmt(sB);it.querySelector('.d-subP').textContent=fmt(sP);tB+=sB;tP+=sP;});
+  const eCB=document.getElementById('edit-total-costB');if(!eCB)return;
+  eCB.textContent=fmt(tB);document.getElementById('edit-total-price').textContent=fmt(tP);
+  const pB=tP-tB,mB=tP?((pB/tP)*100).toFixed(1):'0.0';
+  const ePB=document.getElementById('edit-total-profitB');ePB.innerHTML=`<span class="${pB>=0?'profit-positive':'profit-negative'}">${fmt(pB)}（${mB}%）</span>`;
 }
 
-function addEditDetailRow(data) {
-  editDetailCounter++;
-  const container = document.getElementById('edit-detail-rows');
-  const item = document.createElement('div');
-  item.className = 'product-item';
-  item.setAttribute('data-idx', editDetailCounter);
+function closeEditModal(){document.getElementById('edit-modal').classList.remove('active');editingPID=null;}
 
-  const cat = (data && data.Category) || '';
-  const tag = (data && data.Tag) || '';
-  const name = (data && data.ProductName) || '';
-  const qty = (data && data.Qty) || 1;
-  const costB = (data && data.CostB) || 0;
-  const price = (data && data.Price) || 0;
-  const memo = (data && data.Memo) || '';
-
-  const cats = [...new Set(masterCache.map(m => m.CategoryName))];
-  const catOpts = '<option value="">-- カテゴリ --</option>' + cats.map(c => `<option ${c === cat ? 'selected' : ''}>${escHtml(c)}</option>`).join('');
-
-  let tagOpts = '<option value="">-- タグ --</option>';
-  if (cat) {
-    const tags = masterCache.filter(m => m.CategoryName === cat && m.TagName);
-    tagOpts = '<option value="">-- タグ --</option>' + tags.map(t => `<option ${t.TagName === tag ? 'selected' : ''}>${escHtml(t.TagName)}</option>`).join('');
-  }
-
-  item.innerHTML = `
-    <div class="product-item-header">
-      <span class="product-item-num">商品 #${editDetailCounter}</span>
-      <button class="btn btn-danger btn-sm" onclick="removeEditDetailRow(this)">✕ 削除</button>
-    </div>
-    <div class="form-row-3">
-      <div class="form-group"><label>カテゴリ</label><select class="d-category" onchange="onEditCategoryChange(this)">${catOpts}</select></div>
-      <div class="form-group"><label>タグ</label><select class="d-tag">${tagOpts}</select></div>
-      <div class="form-group"><label>商品名</label><input type="text" class="d-name" value="${escHtml(name)}" placeholder="商品名"></div>
-    </div>
-    <div class="form-row-4">
-      <div class="form-group"><label>数量</label><input type="number" class="d-qty" value="${qty}" min="1" oninput="editCalcAndUpdate()"></div>
-      <div class="form-group"><label>原価</label><input type="number" class="d-costB" value="${costB}" oninput="editCalcAndUpdate()"></div>
-      <div class="form-group"><label>単価（売価）</label><input type="number" class="d-price" value="${price}" oninput="editCalcAndUpdate()"></div>
-    </div>
-    <div class="form-group"><label>備考</label><input type="text" class="d-memo" value="${escHtml(memo)}" placeholder="備考"></div>
-    <div class="product-subtotals">
-      <div class="sub-item"><div class="sub-label">小計（原価×数量）</div><div class="sub-value d-subB">¥0</div></div>
-      <div class="sub-item"><div class="sub-label">小計売（単価×数量）</div><div class="sub-value d-subP">¥0</div></div>
-    </div>
-  `;
-  container.appendChild(item);
-  editCalcAndUpdate();
+async function saveEditProject(){
+  if(!editingPID)return;const pid=editingPID;
+  const nn=document.getElementById('edit-project-name').value.trim(),nC=document.getElementById('edit-customer').value,nS=document.getElementById('edit-status').value,nD=document.getElementById('edit-deadline').value,nAJ=document.getElementById('edit-address-jp').value.trim(),nAE=document.getElementById('edit-address-en').value.trim();
+  const nCD=document.getElementById('edit-created-date').value||'';
+  if(!nn){toast('案件名を入力','error');return;}
+  const items=document.querySelectorAll('#edit-detail-rows .product-item'),products=[];
+  let sortIdx=0;
+  items.forEach(it=>{const q=Number(it.querySelector('.d-qty').value)||0,cB=Number(it.querySelector('.d-costB').value)||0,p=Number(it.querySelector('.d-price').value)||0;products.push({PID:pid,ProjectName:nn,Category:it.querySelector('.d-category').value,Tag:it.querySelector('.d-tag').value,ProductName:it.querySelector('.d-name').value.trim(),Qty:q,CostA:'',CostB:cB,Price:p,SubtotalA:'',SubtotalB:q*cB,SubtotalPrice:q*p,Memo:it.querySelector('.d-memo').value.trim(),SortOrder:String(sortIdx++)});});
+  try{
+    toast('保存中...','info');
+    await fetch(API+'/PID/'+pid+'?sheet=ProjectCustomer',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:{CID:nC,Status:nS,Deadline:nD,DeliveryAddressJP:nAJ,DeliveryAddressEN:nAE,CreatedDate:nCD}})});
+    await fetch(API+'/PID/'+pid+'?sheet=Products',{method:'DELETE'});
+    if(products.length>0) await fetch(API+'?sheet=Products',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:products})});
+    productsCache=null;toast('案件を更新しました！');closeEditModal();loadList();
+  }catch(e){toast('更新エラー','error');}
 }
 
-function removeEditDetailRow(btn) {
-  const container = document.getElementById('edit-detail-rows');
-  if (container.children.length <= 1) { toast('最低1件必要です', 'error'); return; }
-  btn.closest('.product-item').remove();
-  editCalcAndUpdate();
+async function updateStatus(pid,sel){
+  const ns=sel.value;
+  try{const r=await fetch(API+'/PID/'+pid+'?sheet=ProjectCustomer',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:{Status:ns}})});if(!r.ok)throw new Error('HTTP '+r.status);sel.className='status-badge status-'+ns;const it=listData.find(d=>d.PID===pid);if(it)it.Status=ns;toast('ステータス更新');filterList();}catch(e){toast('更新エラー','error');}
 }
 
-function onEditCategoryChange(sel) {
-  const item = sel.closest('.product-item');
-  item.querySelector('.d-tag').innerHTML = getTagOptions(sel.value);
+async function deleteProject(pid){
+  if(!confirm(pid+' を削除？'))return;
+  try{await fetch(API+'/PID/'+pid+'?sheet=Products',{method:'DELETE'});await fetch(API+'/PID/'+pid+'?sheet=ProjectCustomer',{method:'DELETE'});productsCache=null;toast('削除しました');loadList();}catch(e){toast('削除エラー','error');}
 }
 
-function editCalcAndUpdate() {
-  const container = document.getElementById('edit-detail-rows');
-  if (!container) return;
-  const items = container.querySelectorAll('.product-item');
-  let tB = 0, tP = 0;
-  items.forEach(item => {
-    const qty = Number(item.querySelector('.d-qty').value) || 0;
-    const costB = Number(item.querySelector('.d-costB').value) || 0;
-    const price = Number(item.querySelector('.d-price').value) || 0;
-    const subB = qty * costB, subP = qty * price;
-    item.querySelector('.d-subB').textContent = fmt(subB);
-    item.querySelector('.d-subP').textContent = fmt(subP);
-    tB += subB; tP += subP;
-  });
-
-  const elCostB = document.getElementById('edit-total-costB');
-  const elPrice = document.getElementById('edit-total-price');
-  const elProfitB = document.getElementById('edit-total-profitB');
-  if (!elCostB) return;
-
-  elCostB.textContent = fmt(tB);
-  elPrice.textContent = fmt(tP);
-
-  const profitB = tP - tB;
-  const marginB = tP ? ((profitB / tP) * 100).toFixed(1) : '0.0';
-  elProfitB.innerHTML = `<span class="${profitB >= 0 ? 'profit-positive' : 'profit-negative'}">${fmt(profitB)}（${marginB}%）</span>`;
+/* ========== Phase5: 案件複製 ========== */
+async function openCloneModal(pid) {
+  const newPid=await generateId('Products','P','PID');
+  document.getElementById('clone-src-pid').textContent=pid;
+  document.getElementById('clone-new-pid').textContent=newPid;
+  document.getElementById('clone-copy-address').checked=true;
+  document.getElementById('clone-copy-items').checked=true;
+  document.getElementById('clone-copy-price').checked=true;
+  const modal=document.getElementById('clone-modal');
+  modal.dataset.pid=pid;modal.dataset.newPid=newPid;modal.classList.add('active');
 }
+function closeCloneModal(){document.getElementById('clone-modal').classList.remove('active');}
 
-function closeEditModal() {
-  document.getElementById('edit-modal').classList.remove('active');
-  editingPID = null;
-}
-
-async function saveEditProject() {
-  if (!editingPID) return;
-  const pid = editingPID;
-  const newName = document.getElementById('edit-project-name').value.trim();
-  const newCID = document.getElementById('edit-customer').value;
-  const newStatus = document.getElementById('edit-status').value;
-  const newDeadline = document.getElementById('edit-deadline').value;
-  const newAddrJP = document.getElementById('edit-address-jp').value.trim();
-  const newAddrEN = document.getElementById('edit-address-en').value.trim();
-
-  if (!newName) { toast('案件名を入力してください', 'error'); return; }
-
-  const items = document.querySelectorAll('#edit-detail-rows .product-item');
-  const products = [];
-  items.forEach(item => {
-    const qty = Number(item.querySelector('.d-qty').value) || 0;
-    const costB = Number(item.querySelector('.d-costB').value) || 0;
-    const price = Number(item.querySelector('.d-price').value) || 0;
-    products.push({
-      PID: pid, ProjectName: newName,
-      Category: item.querySelector('.d-category').value,
-      Tag: item.querySelector('.d-tag').value,
-      ProductName: item.querySelector('.d-name').value.trim(),
-      Qty: qty, CostA: '', CostB: costB, Price: price,
-      SubtotalA: '', SubtotalB: qty * costB, SubtotalPrice: qty * price,
-      Memo: item.querySelector('.d-memo').value.trim()
-    });
-  });
-
-  try {
-    toast('保存中...', 'info');
-
-    await fetch(API + '/PID/' + pid + '?sheet=ProjectCustomer', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ data: { CID: newCID, Status: newStatus, Deadline: newDeadline, DeliveryAddressJP: newAddrJP, DeliveryAddressEN: newAddrEN } })
-    });
-
-    await fetch(API + '/PID/' + pid + '?sheet=Products', { method: 'DELETE' });
-
-    if (products.length > 0) {
-      await fetch(API + '?sheet=Products', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: products })
-      });
+async function executeClone() {
+  const modal=document.getElementById('clone-modal');
+  const origPid=modal.dataset.pid,newPid=modal.dataset.newPid;
+  const copyAddress=document.getElementById('clone-copy-address').checked;
+  const copyItems=document.getElementById('clone-copy-items').checked;
+  const copyPrice=document.getElementById('clone-copy-price').checked;
+  const orig=listData.find(d=>d.PID===origPid);if(!orig)return;
+  try{
+    toast('複製中...','info');
+    const origPn=orig.products[0]?.ProjectName||'';
+    const pcData={PID:newPid,CID:orig.CID,Status:'見積中',Deadline:'',DeliveryAddressJP:copyAddress?(orig.DeliveryAddressJP||''):'',DeliveryAddressEN:copyAddress?(orig.DeliveryAddressEN||''):'',Hidden:'',CreatedDate:todayISO()};
+    await fetch(API+'?sheet=ProjectCustomer',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:pcData})});
+    if(copyItems&&orig.products.length>0){
+      const products=orig.products.map((p,i)=>({PID:newPid,ProjectName:origPn+'（複製）',Category:p.Category||'',Tag:p.Tag||'',ProductName:p.ProductName||'',Qty:p.Qty||0,CostA:'',CostB:copyPrice?(p.CostB||0):0,Price:copyPrice?(p.Price||0):0,SubtotalA:'',SubtotalB:copyPrice?(p.SubtotalB||0):0,SubtotalPrice:copyPrice?(p.SubtotalPrice||0):0,Memo:p.Memo||'',SortOrder:String(i)}));
+      await fetch(API+'?sheet=Products',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:products})});
+    } else {
+      await fetch(API+'?sheet=Products',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:{PID:newPid,ProjectName:origPn+'（複製）',Category:'',Tag:'',ProductName:'',Qty:0,CostA:'',CostB:0,Price:0,SubtotalA:'',SubtotalB:0,SubtotalPrice:0,Memo:'',SortOrder:'0'}})});
     }
+    productsCache=null;closeCloneModal();toast('✅ '+newPid+' として複製しました！');loadList();
+  }catch(e){toast('複製エラー','error');}
+}
 
-    productsCache = null;
-    toast('案件を更新しました！');
-    closeEditModal();
-    loadList();
-  } catch (e) {
-    toast('更新エラー: ' + e.message, 'error');
+/* ========== Phase6: ダッシュボード ========== */
+async function loadDashboard() {
+  try{
+    const [pcR,pdR,cR]=await Promise.all([fetch(API+'?sheet=ProjectCustomer'),fetch(API+'?sheet=Products'),fetch(API+'?sheet=Customers')]);
+    const allPc=await pcR.json(),allPd=await pdR.json(),allC=await cR.json();
+    buildHiddenSets(allC,allPc);
+    pcCache=allPc.filter(pc=>!hiddenPIDs.has(pc.PID));
+    productsCache=allPd.filter(p=>!hiddenPIDs.has(p.PID));
+    customersCache=allC.filter(c=>!hiddenCIDs.has(c.CID));
+    renderDashboard();
+  }catch(e){toast('ダッシュボードエラー','error');}
+}
+
+function renderDashboard() {
+  const totalProjects=pcCache.length;
+  const activeProjects=pcCache.filter(p=>p.Status!=='完了').length;
+  const totalCustomers=customersCache.length;
+  const totalSales=(productsCache||[]).reduce((s,p)=>s+Number(p.SubtotalPrice||0),0);
+  const totalCostB=(productsCache||[]).reduce((s,p)=>s+Number(p.SubtotalB||0),0);
+  const totalProfit=totalSales-totalCostB;
+  const margin=totalSales?((totalProfit/totalSales)*100).toFixed(1)+'%':'0%';
+  document.getElementById('kpi-projects').textContent=totalProjects;
+  document.getElementById('kpi-active').textContent=activeProjects;
+  document.getElementById('kpi-customers').textContent=totalCustomers;
+  document.getElementById('kpi-sales').textContent=fmt(totalSales);
+  const kpiProfit=document.getElementById('kpi-profit');
+  kpiProfit.textContent=fmt(totalProfit);kpiProfit.style.color=totalProfit>=0?'#27ae60':'#e74c3c';
+  document.getElementById('kpi-margin').textContent=margin;
+  renderDeliveryCalendar();renderUpcomingDeadlines();renderTrendChart();
+}
+
+function renderDeliveryCalendar() {
+  const now=new Date(),year=now.getFullYear(),month=now.getMonth();
+  const firstDow=new Date(year,month,1).getDay(),daysInMonth=new Date(year,month+1,0).getDate();
+  const deliveries={};
+  pcCache.forEach(pc=>{
+    if(!pc.Deadline)return;
+    const d=parseDeadline(pc.Deadline);
+    if(!d||d.getFullYear()!==year||d.getMonth()!==month)return;
+    const day=d.getDate();
+    if(!deliveries[day])deliveries[day]=[];
+    const prods=(productsCache||[]).filter(p=>p.PID===pc.PID);
+    deliveries[day].push({pid:pc.PID,name:prods[0]?.ProjectName||pc.PID,status:pc.Status});
+  });
+  const dayNames=['日','月','火','水','木','金','土'],today=now.getDate();
+  let html=`<div style="text-align:center;font-weight:700;margin-bottom:8px;color:#c0392b;">${year}年${month+1}月</div>`;
+  html+='<table class="cal-table"><thead><tr>'+dayNames.map((d,i)=>`<th style="color:${i===0?'#e74c3c':i===6?'#3498db':'#555'}">${d}</th>`).join('')+'</tr></thead><tbody>';
+  let day=1;
+  for(let w=0;w<6&&day<=daysInMonth;w++){
+    html+='<tr>';
+    for(let dow=0;dow<7;dow++){
+      if((w===0&&dow<firstDow)||day>daysInMonth){html+='<td></td>';continue;}
+      const isToday=day===today;
+      const cls=isToday?'cal-today':(dow===0?'cal-sun':dow===6?'cal-sat':'');
+      html+=`<td class="${cls}"><div class="cal-day-num">${day}</div>`;
+      (deliveries[day]||[]).forEach(ev=>{html+=`<span class="cal-event" onclick="jumpToProject('${ev.pid}')" title="${escHtml(ev.name)}">${escHtml(ev.name)}</span>`;});
+      html+='</td>';day++;
+    }
+    html+='</tr>';
   }
+  html+='</tbody></table>';
+  document.getElementById('delivery-calendar').innerHTML=html;
 }
 
-async function updateStatus(pid, selectEl) {
-  const newStatus = selectEl.value;
-  try {
-    const res = await fetch(API + '/PID/' + pid + '?sheet=ProjectCustomer', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ data: { Status: newStatus } })
-    });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    selectEl.className = 'status-badge status-' + newStatus;
-    const item = listData.find(d => d.PID === pid);
-    if (item) item.Status = newStatus;
-    toast('ステータスを更新しました');
-    filterList();
-  } catch (e) {
-    toast('ステータス更新エラー: ' + e.message, 'error');
-  }
+function renderUpcomingDeadlines() {
+  const today=new Date();today.setHours(0,0,0,0);
+  const rows=pcCache
+    .filter(pc=>pc.Status!=='完了'&&pc.Deadline)
+    .map(pc=>{
+      const d=parseDeadline(pc.Deadline);
+      const prods=(productsCache||[]).filter(p=>p.PID===pc.PID);
+      return {...pc,parsedDate:d,projectName:prods[0]?.ProjectName||'不明',totalPrice:prods.reduce((s,p)=>s+Number(p.SubtotalPrice||0),0)};
+    })
+    .filter(pc=>pc.parsedDate)
+    .sort((a,b)=>a.parsedDate-b.parsedDate)
+    .slice(0,10);
+  if(!rows.length){document.getElementById('dash-deadlines').innerHTML='<p style="color:#999;text-align:center;padding:20px;">直近の納期なし</p>';return;}
+  document.getElementById('dash-deadlines').innerHTML=rows.map(pc=>{
+    const diff=Math.ceil((pc.parsedDate-today)/86400000);
+    const cls=diff<0?'deadline-near':diff<=7?'deadline-soon':'deadline-ok';
+    const label=diff<0?`⚠️ ${Math.abs(diff)}日超過`:diff===0?'⚠️ 本日':'残'+diff+'日';
+    return `<div class="deadline-row" onclick="jumpToProject('${pc.PID}')"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-weight:700;color:#c0392b;font-size:0.85em;">${pc.PID}</span><span style="font-size:0.88em;">${escHtml(pc.projectName)}</span><span class="status-badge status-${pc.Status}">${pc.Status}</span></div><div style="display:flex;align-items:center;gap:10px;"><span style="font-weight:700;font-size:0.85em;">${fmt(pc.totalPrice)}</span><span class="${cls}" style="font-size:0.82em;white-space:nowrap;">${label}</span></div></div>`;
+  }).join('');
 }
 
-async function deleteProject(pid) {
-  if (!confirm(pid + ' を削除しますか？')) return;
-  try {
-    await fetch(API + '/PID/' + pid + '?sheet=Products', { method: 'DELETE' });
-    await fetch(API + '/PID/' + pid + '?sheet=ProjectCustomer', { method: 'DELETE' });
-    productsCache = null; toast('削除しました'); loadList();
-  } catch (e) { toast('削除エラー', 'error'); }
+function renderTrendChart() {
+  const now=new Date();
+  const months=Array.from({length:12},(_,i)=>{const d=new Date(now.getFullYear(),now.getMonth()-11+i,1);return{label:(d.getMonth()+1)+'月',year:d.getFullYear(),month:d.getMonth()};});
+  const salesData=months.map(m=>pcCache.filter(pc=>{const d=parseDeadline(pc.CreatedDate);return d&&d.getFullYear()===m.year&&d.getMonth()===m.month;}).reduce((s,pc)=>{return s+(productsCache||[]).filter(p=>p.PID===pc.PID).reduce((ss,p)=>ss+Number(p.SubtotalPrice||0),0);},0));
+  const countData=months.map(m=>pcCache.filter(pc=>{const d=parseDeadline(pc.CreatedDate);return d&&d.getFullYear()===m.year&&d.getMonth()===m.month;}).length);
+  const ctx=document.getElementById('trend-chart');if(!ctx)return;
+  if(window._trendChart)window._trendChart.destroy();
+  window._trendChart=new Chart(ctx,{
+    data:{labels:months.map(m=>m.label),datasets:[
+      {type:'bar',label:'売上（円）',data:salesData,backgroundColor:'rgba(192,57,43,0.6)',borderColor:'#c0392b',borderWidth:1,yAxisID:'y'},
+      {type:'line',label:'案件数',data:countData,borderColor:'#e74c3c',backgroundColor:'rgba(231,76,60,0.1)',borderWidth:2,pointRadius:4,yAxisID:'y1',tension:0.3,fill:true}
+    ]},
+    options:{responsive:true,plugins:{legend:{position:'top'}},scales:{y:{position:'left',ticks:{callback:v=>'¥'+v.toLocaleString()}},y1:{position:'right',grid:{drawOnChartArea:false},ticks:{stepSize:1},min:0}}}
+  });
 }
 
-// ============================================================
-// INIT
-// ============================================================
-document.addEventListener('DOMContentLoaded', () => { initRegister(); });
+document.addEventListener('DOMContentLoaded',()=>{loadDashboard();});
 </script>
 </body>
 </html>
