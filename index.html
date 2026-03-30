@@ -777,8 +777,6 @@ async function saveProject(){
 function resetRegister(){initRegister();}
 
 /* ========== LIST ========== */
-let listData = [];
-
 async function loadList(){
   try{
     const [pcR,pdR,cR]=await Promise.all([fetch(API+'?sheet=ProjectCustomer'),fetch(API+'?sheet=Products'),fetch(API+'?sheet=Customers')]);
@@ -945,13 +943,17 @@ async function executeClone() {
 async function loadDashboard() {
   try{
     const [pcR,pdR,cR]=await Promise.all([fetch(API+'?sheet=ProjectCustomer'),fetch(API+'?sheet=Products'),fetch(API+'?sheet=Customers')]);
-    const allPc=await pcR.json(),allPd=await pdR.json(),allC=await cR.json();
+    const rawPc=await pcR.json(),rawPd=await pdR.json(),rawC=await cR.json();
+    const allPc=Array.isArray(rawPc)?rawPc:[];
+    const allPd=Array.isArray(rawPd)?rawPd:[];
+    const allC=Array.isArray(rawC)?rawC:[];
+    if(!allPc.length&&!allC.length){console.warn('SheetDB returned non-array:',rawPc,rawC);}
     buildHiddenSets(allC,allPc);
     pcCache=allPc.filter(pc=>!hiddenPIDs.has(pc.PID));
     productsCache=allPd.filter(p=>!hiddenPIDs.has(p.PID));
     customersCache=allC.filter(c=>!hiddenCIDs.has(c.CID));
     renderDashboard();
-  }catch(e){toast('ダッシュボードエラー','error');}
+  }catch(e){console.error('loadDashboard error:',e);toast('ダッシュボードエラー: '+e.message,'error');}
 }
 
 function renderDashboard() {
@@ -1027,6 +1029,7 @@ function renderUpcomingDeadlines() {
 }
 
 function renderTrendChart() {
+  if(typeof Chart==='undefined'){console.warn('Chart.js not loaded');return;}
   const now=new Date();
   const months=Array.from({length:12},(_,i)=>{const d=new Date(now.getFullYear(),now.getMonth()-11+i,1);return{label:(d.getMonth()+1)+'月',year:d.getFullYear(),month:d.getMonth()};});
   const salesData=months.map(m=>pcCache.filter(pc=>{const d=parseDeadline(pc.CreatedDate);return d&&d.getFullYear()===m.year&&d.getMonth()===m.month;}).reduce((s,pc)=>{return s+(productsCache||[]).filter(p=>p.PID===pc.PID).reduce((ss,p)=>ss+Number(p.SubtotalPrice||0),0);},0));
