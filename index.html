@@ -40,6 +40,9 @@
   .btn-warning:hover { background: #e67e22; }
   .btn-sm { padding: 6px 12px; font-size: 0.8em; }
   .btn-group { display: flex; gap: 8px; margin-top: 10px; }
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type=number] { -moz-appearance: textfield; }
 
   table { width: 100%; border-collapse: collapse; }
   th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #eee; font-size: 0.85em; }
@@ -839,8 +842,9 @@ function renderList(data){
 
 function toggleCard(h){h.nextElementSibling.classList.toggle('open');}
 
-function openEditModal(pid){
+async function openEditModal(pid){
   editingPID=pid;editDetailCounter=0;const d=listData.find(x=>x.PID===pid);if(!d)return;
+  if(!masterCache.length){try{const r=await fetch(API+'?sheet=Master');masterCache=await r.json();}catch(e){}}
   const pn=d.products[0]?.ProjectName||'',dlISO=formatDateISO(d.Deadline),cAJ=d.DeliveryAddressJP||'',cAE=d.DeliveryAddressEN||'';
   const cdISO=formatDateISO(d.CreatedDate)||'';
   const cOpts=customersCache.map(c=>`<option value="${c.CID}" ${c.CID===d.CID?'selected':''}>${escHtml(c.CustomerName)}</option>`).join('');
@@ -856,6 +860,7 @@ function onEditCustomerChange(){const cid=document.getElementById('edit-customer
 function addEditDetailRow(data){
   editDetailCounter++;const ct=document.getElementById('edit-detail-rows'),it=document.createElement('div');it.className='product-item';
   const cat=(data?.Category)||'',tag=(data?.Tag)||'',nm=(data?.ProductName)||'',qty=(data?.Qty)||1,cB=(data?.CostB)||0,pr=(data?.Price)||0,memo=(data?.Memo)||'';
+  it.dataset.origCostA=data?.CostA||'';
   const cats=getSortedCategories();
   const catO='<option value="">-- カテゴリ --</option>'+cats.map(c=>`<option ${c===cat?'selected':''}>${escHtml(c)}</option>`).join('');
   let tagO='<option value="">-- タグ --</option>';if(cat){tagO='<option value="">-- タグ --</option>'+masterCache.filter(m=>m.CategoryName===cat&&m.TagName).sort((a,b)=>(Number(a.SortOrder)||0)-(Number(b.SortOrder)||0)).map(t=>`<option ${t.TagName===tag?'selected':''}>${t.TagName}</option>`).join('');}
@@ -884,7 +889,7 @@ async function saveEditProject(){
   if(!nn){toast('案件名を入力','error');return;}
   const items=document.querySelectorAll('#edit-detail-rows .product-item'),products=[];
   let sortIdx=0;
-  items.forEach(it=>{const q=Number(it.querySelector('.d-qty').value)||0,cB=Number(it.querySelector('.d-costB').value)||0,p=Number(it.querySelector('.d-price').value)||0;products.push({PID:pid,ProjectName:nn,Category:it.querySelector('.d-category').value,Tag:it.querySelector('.d-tag').value,ProductName:it.querySelector('.d-name').value.trim(),Qty:q,CostA:'',CostB:cB,Price:p,SubtotalA:'',SubtotalB:q*cB,SubtotalPrice:q*p,Memo:it.querySelector('.d-memo').value.trim(),SortOrder:String(sortIdx++)});});
+  items.forEach(it=>{const q=Number(it.querySelector('.d-qty').value)||0,cB=Number(it.querySelector('.d-costB').value)||0,p=Number(it.querySelector('.d-price').value)||0,cA=it.dataset.origCostA!==undefined?it.dataset.origCostA:'';products.push({PID:pid,ProjectName:nn,Category:it.querySelector('.d-category').value,Tag:it.querySelector('.d-tag').value,ProductName:it.querySelector('.d-name').value.trim(),Qty:q,CostA:cA,CostB:cB,Price:p,SubtotalA:cA!==''?q*Number(cA):'',SubtotalB:q*cB,SubtotalPrice:q*p,Memo:it.querySelector('.d-memo').value.trim(),SortOrder:String(sortIdx++)});});
   try{
     toast('保存中...','info');
     await fetch(API+'/PID/'+pid+'?sheet=ProjectCustomer',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:{CID:nC,Status:nS,Deadline:nD,DeliveryAddressJP:nAJ,DeliveryAddressEN:nAE,CreatedDate:nCD}})});
